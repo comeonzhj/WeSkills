@@ -159,6 +159,7 @@ export function Layout(props: {
                 skillsgist
               </a>
               <a href="/agents" class="ws-nav-link">Agent 规范中心</a>
+              <a href="/rankings" class="ws-nav-link">排行榜</a>
               <span class="flex-1" />
               {props.user ? (
                 <>

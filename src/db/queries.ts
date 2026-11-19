@@ -287,7 +287,7 @@ const LISTED_SKILL_SQL = `SELECT s.*, u.username AS author, p.name AS project_na
 
 export async function listSkills(
   db: D1Database,
-  opts: { scope: SkillScope; project?: string; q?: string },
+  opts: { scope: SkillScope; project?: string; q?: string; ranked?: boolean },
 ): Promise<ListedSkill[]> {
   const clauses: string[] = [];
   const binds: unknown[] = [];
@@ -310,7 +310,7 @@ export async function listSkills(
   }
   const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
   const { results } = await db
-    .prepare(`${LISTED_SKILL_SQL} ${where} ORDER BY s.updated_at DESC`)
+    .prepare(`${LISTED_SKILL_SQL} ${where} ORDER BY ${opts.ranked ? "s.download_count DESC, s.slug, s.project LIMIT 20" : "s.updated_at DESC"}`)
     .bind(...binds)
     .all<ListedSkill>();
   return results;
