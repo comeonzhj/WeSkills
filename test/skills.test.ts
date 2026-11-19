@@ -221,7 +221,7 @@ describe("GET /p/:project/s/:slug", () => {
     const member = await promptOn("/p/default/s/other-skill", cookie);
     expect(member.url).toBe(`${ORIGIN}/p/default/.well-known/agent-skills/other-skill`);
     expect(member.command).toBe(`npx -y skillsgist add ${member.url} --skill other-skill -g -y`);
-    expect(member.html).toContain(en.skills.agentPrompt(member.command));
+    expect(member.html).toContain(en.skills.agentPrompt(member.command, ".agents/skills/other-skill/SKILL.md"));
     expect(member.html).not.toMatch(/skillsgist(@\S+)? use /);
   });
 
@@ -265,7 +265,7 @@ describe("GET /p/:project/s/:slug", () => {
   it("words the agent prompt in the reader's language and keeps the command verbatim", async () => {
     await seedWithSkills({ username: "alice" }, [GOOD_MD, "public"]);
     const { command, html } = await promptOn("/p/default/s/demo-skill", `${LOCALE_COOKIE}=zh-CN`);
-    expect(html).toContain(zhCN.skills.agentPrompt(command));
+    expect(html).toContain(zhCN.skills.agentPrompt(command, ".agents/skills/demo-skill/SKILL.md"));
     expect(html).toContain('<legend class="sr-only">安装方式</legend>');
   });
 

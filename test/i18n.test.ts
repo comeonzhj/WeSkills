@@ -48,7 +48,7 @@ describe("catalogs", () => {
     ["ja", ja],
   ])("%s keeps the agent prompt's command verbatim, in backticks", (_name, catalog) => {
     const command = "npx -y skills add https://example.com/.well-known/agent-skills/demo --skill demo -g -y";
-    expect(catalog.skills.agentPrompt(command)).toContain(`\`${command}\``);
+    expect(catalog.skills.agentPrompt(command, ".agents/skills/demo/SKILL.md")).toContain(`\`${command}\``);
   });
 });
 

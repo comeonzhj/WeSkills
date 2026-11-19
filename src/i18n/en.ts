@@ -7,7 +7,7 @@ export type SkillAction = "modify" | "move" | "delete" | "edit" | "update";
 export const en = {
   layout: {
     tagline: "Team workspace for Skills and Agent standards.",
-    ogImageAlt: "WeSkills",
+    ogImageAlt: "WeSkills team workspace",
     skip: "Skip to content",
     mainNav: "Main",
     footerNav: "Footer",

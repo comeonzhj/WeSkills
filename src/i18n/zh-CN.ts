@@ -5,7 +5,7 @@ const ACTIONS: Record<SkillAction, string> = { modify: "修改", move: "移动",
 export const zhCN: Messages = {
   layout: {
     tagline: "团队 Skills 与 Agent 规范工作台。",
-    ogImageAlt: "WeSkills",
+    ogImageAlt: "WeSkills 团队工作台",
     skip: "跳到正文",
     mainNav: "主导航",
     footerNav: "页脚",

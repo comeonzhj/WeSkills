@@ -5,7 +5,7 @@ const ACTIONS: Record<SkillAction, string> = { modify: "変更", move: "移動",
 export const ja: Messages = {
   layout: {
     tagline: "チームの Skills とエージェント規約を管理。",
-    ogImageAlt: "WeSkills",
+    ogImageAlt: "WeSkills チームワークスペース",
     skip: "本文へスキップ",
     mainNav: "メイン",
     footerNav: "フッター",
