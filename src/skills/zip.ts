@@ -1,3 +1,5 @@
+export const MAX_EXPANDED_ARCHIVE = 8 * 1024 * 1024;
+
 export interface ArchiveEntry {
   path: string;
   data: Uint8Array;
@@ -35,9 +37,34 @@ export function crc32(data: Uint8Array): number {
 export async function pipeBytes(
   data: Uint8Array,
   transform: CompressionStream | DecompressionStream,
+  maximum?: number,
 ): Promise<Uint8Array> {
   const stream = new Blob([data]).stream().pipeThrough(transform);
-  return new Uint8Array(await new Response(stream).arrayBuffer());
+  if (maximum === undefined) return new Uint8Array(await new Response(stream).arrayBuffer());
+  const reader = stream.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  try {
+    for (;;) {
+      const next = await reader.read();
+      if (next.done) break;
+      total += next.value.byteLength;
+      if (total > maximum) {
+        await reader.cancel();
+        throw new ArchiveError("Expanded archive exceeds its size limit");
+      }
+      chunks.push(next.value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+  const result = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    result.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return result;
 }
 
 function deflateRaw(data: Uint8Array): Promise<Uint8Array> {
@@ -130,8 +157,8 @@ export async function writeZip(entries: ArchiveEntry[]): Promise<Uint8Array> {
   return out;
 }
 
-function inflateRaw(data: Uint8Array): Promise<Uint8Array> {
-  return pipeBytes(data, new DecompressionStream("deflate-raw"));
+function inflateRaw(data: Uint8Array, maximum: number): Promise<Uint8Array> {
+  return pipeBytes(data, new DecompressionStream("deflate-raw"), maximum);
 }
 
 function findEocd(view: DataView, length: number): number {
@@ -152,6 +179,7 @@ export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array
   let offset = view.getUint32(eocd + 16, true);
   const files = new Map<string, Uint8Array>();
   const dec = new TextDecoder();
+  let total = 0;
 
   // The whole read is wrapped once rather than per iteration: every failure
   // mode here aborts the read anyway, and callers rely on only ArchiveError
@@ -175,6 +203,8 @@ export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array
       offset = offset + 46 + nameLen + extraLen + commentLen;
 
       if (name.endsWith("/")) continue;
+      total += uncompressedSize;
+      if (total > MAX_EXPANDED_ARCHIVE) throw new ArchiveError("Expanded archive exceeds its size limit");
       if (flags & 1) throw new ArchiveError("Encrypted zip entries are not supported");
       const fileType = (externalAttrs >>> 16) & 0xf000;
       if (fileType === 0xa000 || fileType === 0x1000) throw new ArchiveError("Link entries in archives are not supported");
@@ -187,7 +217,7 @@ export async function readZip(bytes: Uint8Array): Promise<Map<string, Uint8Array
 
       let content: Uint8Array;
       if (method === 0) content = raw;
-      else if (method === 8) content = await inflateRaw(raw);
+      else if (method === 8) content = await inflateRaw(raw, uncompressedSize);
       else throw new ArchiveError(`Unsupported zip compression method: ${method}`);
 
       if (content.byteLength !== uncompressedSize) throw new ArchiveError(`Zip entry size mismatch: ${name}`);

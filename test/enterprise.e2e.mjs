@@ -96,7 +96,18 @@ test('permissions, quiet CLI, review workflow, Agent templates and rankings', as
   const reviewer = await account('reviewer', true)
   const outsider = await account('outsider')
   const adminToken = await apiToken(admin)
-  const memberToken = await apiToken(employee.session)
+  const device = spawn(process.execPath, ['cli/weskills.mjs', 'login', '--server', origin, '--project', 'default', '--json'], {
+    env: { ...process.env, WESKILLS_CONFIG_DIR: join(scratch, 'credentials') }, stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  t.after(() => { if (device.exitCode === null) device.kill() })
+  const deviceExit = once(device, 'exit');
+  const [prompt] = await once(device.stderr, 'data');
+  const deviceCode = /Code: ([A-Z]{4}-[A-Z]{4})/.exec(String(prompt))?.[1]
+  assert.ok(deviceCode, String(prompt))
+  const granted = await post('/device', employee.session, { code: deviceCode, decision: 'approve', project: 'default' })
+  assert.equal(granted.status, 302)
+  assert.equal((await deviceExit)[0], 0)
+  const memberToken = undefined
   const outsiderToken = await apiToken(outsider.session)
   const interaction = await loadSkill('Interaction-PRD', join(scratch, 'interaction'))
   const install = join(scratch, 'install')
@@ -161,5 +172,7 @@ test('permissions, quiet CLI, review workflow, Agent templates and rankings', as
   assert.match(ranking, /Engineering handbook/)
   assert.match(ranking, /employee/)
   assert.match(ranking, /2 次获批/)
+  assert.equal(JSON.parse((await cli(memberToken, 'logout', '--json')).stdout).status, 'signed_out')
+  await assert.rejects(pull(memberToken, join(scratch, 'logged-out')), /404/)
   assert.doesNotMatch(await (await open('/rankings', outsider.session)).text(), /interaction-prd|Engineering handbook/)
 })

@@ -186,8 +186,8 @@ export const en = {
     installWith: "Install with",
     installCommand: "Command",
     installPrompt: "Prompt",
-    agentPrompt: (command: string) =>
-      `Run \`${command}\`. Read the complete output of that command, redirecting it to a temporary file first if necessary, then open the SKILL.md in the directory that output reports and follow the instructions in it now. Resolve relative paths from that directory.`,
+    agentPrompt: (command: string, entry: string) =>
+      `From the project root, run \`${command}\`. Open \`${entry}\` and follow its instructions. Resolve relative paths from the Skill directory.`,
     notAllowed: (action: SkillAction) => `You are not allowed to ${action} this skill`,
     moveForbidden: "You cannot move a skill into that project",
     nameTakenIn: (project: string, slug: string) => `${project} already has a skill named ${slug}`,

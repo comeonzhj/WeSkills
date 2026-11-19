@@ -78,7 +78,7 @@ agentRoutes.post("/agents/new", requireUser, async c => {
       throw new SubmissionError("请选择不超过 512 KB 的 AGENTS.md 文件。");
     }
     let markdown: string;
-    try { markdown = new TextDecoder("utf-8", { fatal: true }).decode(await body.file.arrayBuffer()); }
+    try { markdown = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false }).decode(await body.file.arrayBuffer()); }
     catch { throw new SubmissionError("请使用 UTF-8 编码的 AGENTS.md。"); }
     if (!markdown.trim() || markdown.includes("\0")) throw new SubmissionError("AGENTS.md 需要包含有效的文本。");
     const item = { project, name, description, markdown, visibility } as const;

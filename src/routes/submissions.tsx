@@ -58,7 +58,7 @@ async function review(c: Ctx) {
   const left = before.get(file);
   const right = after.get(file);
   const names = [...new Set([...before.keys(), ...after.keys()])].sort();
-  const decoder = new TextDecoder("utf-8", { fatal: true });
+  const decoder = new TextDecoder("utf-8", { fatal: true, ignoreBOM: false });
   function patch() {
     if (!left && !right) return "";
     if ((left?.length ?? 0) + (right?.length ?? 0) > 400_000) return "文件较大，请下载归档查看完整内容。";

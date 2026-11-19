@@ -221,7 +221,7 @@ async function main() {
   const project = values.project ?? metadata?.project
   if (metadata && project !== metadata.project) throw new Error('Project differs from the installation source')
   const credentials = await jsonFile(config) ?? {}
-  const token = (specifiedServer ? process.env.WESKILLS_TOKEN : undefined) ?? credentials[server]
+  const token = (specifiedServer && process.env.WESKILLS_TOKEN) || credentials[server]
   let result
   if (command === 'login') {
     result = await login(server, project, credentials)

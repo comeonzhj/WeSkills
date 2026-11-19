@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import {
-  clearSession, hashPassword, MIN_PASSWORD_LENGTH, randomHex, requireAdmin, requireUser, roleOf, startSession,
+  clearSession, constantTimeEqual, hashPassword, MIN_PASSWORD_LENGTH, randomHex, requireAdmin, requireUser, roleOf, startSession,
   verifyPassword,
 } from "../auth";
 import type { AppEnv, Ctx } from "../auth";
@@ -68,7 +68,7 @@ usersRoutes.post("/setup", async (c) => {
   const t = messages(c);
   const body = await c.req.parseBody();
   const protectedSetup = !!c.env.SETUP_TOKEN;
-  if (protectedSetup && body.setupToken !== c.env.SETUP_TOKEN) {
+  if (c.env.SETUP_TOKEN && (typeof body.setupToken !== "string" || !constantTimeEqual(body.setupToken, c.env.SETUP_TOKEN))) {
     return page(c, <SetupPage protectedSetup error="Invalid setup token" />, 403);
   }
   const username = String(body.username ?? "");

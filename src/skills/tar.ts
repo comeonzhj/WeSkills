@@ -1,4 +1,4 @@
-import { ArchiveError, pipeBytes } from "./zip";
+import { ArchiveError, MAX_EXPANDED_ARCHIVE, pipeBytes } from "./zip";
 
 /** The only place the gzip format is recognised. */
 export function isGzip(b: Uint8Array): boolean {
@@ -6,7 +6,7 @@ export function isGzip(b: Uint8Array): boolean {
 }
 
 function inflateGzipMember(data: Uint8Array): Promise<Uint8Array> {
-  return pipeBytes(data, new DecompressionStream("gzip"));
+  return pipeBytes(data, new DecompressionStream("gzip"), MAX_EXPANDED_ARCHIVE + 1024 * 1024);
 }
 
 function indexAfterLastNonZero(data: Uint8Array): number {
@@ -55,7 +55,8 @@ export function gzipRetryLengths(data: Uint8Array): number[] {
 async function gunzip(data: Uint8Array): Promise<Uint8Array> {
   try {
     return await inflateGzipMember(data);
-  } catch {
+  } catch (error) {
+    if (error instanceof ArchiveError) throw error;
     for (const end of gzipRetryLengths(data)) {
       try {
         return await inflateGzipMember(data.subarray(0, end));

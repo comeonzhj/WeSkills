@@ -4,10 +4,10 @@ import { issue, IssueError } from "../i18n/issues";
 import type { Issue } from "../i18n/issues";
 import { isValidDescription, isValidSkillName, parseFrontmatter } from "./frontmatter";
 import { isGzip, readTarGz } from "./tar";
-import { ArchiveError, readZip, writeZip, type ArchiveEntry } from "./zip";
+import { ArchiveError, MAX_EXPANDED_ARCHIVE, readZip, writeZip, type ArchiveEntry } from "./zip";
 
 export const MAX_UPLOAD_BYTES = 2 * 1024 * 1024;
-export const MAX_UNPACKED_BYTES = 8 * 1024 * 1024;
+export const MAX_UNPACKED_BYTES = MAX_EXPANDED_ARCHIVE;
 export const MAX_FILES = 200;
 
 export class UploadError extends IssueError {
@@ -33,7 +33,7 @@ function isZip(b: Uint8Array): boolean {
 }
 
 function isJunk(path: string): boolean {
-  if (path.startsWith("__MACOSX/")) return true;
+  if (path.startsWith("__MACOSX/") || path.split("/").some(part => [".git", "node_modules", ".weskills.json"].includes(part))) return true;
   const base = path.slice(path.lastIndexOf("/") + 1);
   return base === ".DS_Store" || base === "Thumbs.db" || base.startsWith("._");
 }

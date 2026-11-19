@@ -183,8 +183,8 @@ export const ja: Messages = {
     installWith: "インストール方法",
     installCommand: "コマンド",
     installPrompt: "プロンプト",
-    agentPrompt: (command) =>
-      `\`${command}\` を実行してください。コマンドの出力は最後まで読み（必要なら先に一時ファイルへリダイレクトしてください）、出力に示されたディレクトリの SKILL.md を開いて、その指示に今すぐ従ってください。相対パスはそのディレクトリを基準に解決してください。`,
+    agentPrompt: (command, entry) =>
+      `プロジェクトのルートで \`${command}\` を実行してください。次に \`${entry}\` を開いて手順に従い、相対パスは Skill のディレクトリを基準に解決してください。`,
     notAllowed: (action) => `このスキルを${ACTIONS[action]}する権限がありません`,
     moveForbidden: "そのプロジェクトにはスキルを移動できません",
     nameTakenIn: (project, slug) => `${project} にはすでに ${slug} という名前のスキルがあります`,

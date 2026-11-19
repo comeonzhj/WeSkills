@@ -173,8 +173,8 @@ export const zhTW: Messages = {
     installWith: "安裝方式",
     installCommand: "指令",
     installPrompt: "提示詞",
-    agentPrompt: (command) =>
-      `執行 \`${command}\`。完整閱讀這個指令的輸出，必要時先將輸出重新導向到暫存檔，接著開啟輸出中列出的目錄裡的 SKILL.md，並立即依照其中的指示進行。相對路徑請以該目錄為基準。`,
+    agentPrompt: (command, entry) =>
+      `在專案根目錄執行 \`${command}\`，接著讀取 \`${entry}\` 並遵循指示。相對路徑以 Skill 目錄為基準。`,
     notAllowed: (action) => `你沒有權限${ACTIONS[action]}這個技能`,
     moveForbidden: "無法將技能移動到該專案",
     nameTakenIn: (project, slug) => `${project} 中已有名為 ${slug} 的技能`,

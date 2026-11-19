@@ -285,7 +285,7 @@ function MoveSkill(props: { skill: ListedSkill; targets: Array<{ slug: string; n
   );
 }
 
-function Install(props: { command: string }) {
+function Install(props: { command: string; slug: string }) {
   const t = useT();
   return (
     <div class="cf-install">
@@ -305,7 +305,7 @@ function Install(props: { command: string }) {
       </div>
       <div id="install-prompt" data-mode="prompt" role="group" aria-label={t.skills.installPrompt}>
         <CodeBlock raised prompt={false}>
-          {t.skills.agentPrompt(props.command)}
+          {t.skills.agentPrompt(props.command, `.agents/skills/${props.slug}/SKILL.md`)}
         </CodeBlock>
       </div>
     </div>
@@ -336,7 +336,7 @@ export function SkillPage(props: {
         <div class="cf-hero-inner cf-hero-start">
           <h1 id="skill-title" class="cf-hero-title cf-skill-title">{fullName(skill)}</h1>
           <p class="cf-hero-lede">{version.description}</p>
-          {canInstall && isLatest ? <Install command={command} /> : null}
+          {canInstall && isLatest ? <Install command={command} slug={skill.slug} /> : null}
         </div>
       </section>
 

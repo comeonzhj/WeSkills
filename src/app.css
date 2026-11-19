@@ -446,8 +446,6 @@
   }
 
   .cf-frame {
-    --cf-mark: var(--ds-border-hairline);
-    --cf-mark-fill: var(--ds-bg-canvas);
     position: relative;
     border: 1px solid var(--ds-border-hairline);
     background: var(--ds-bg-raised);
@@ -2752,16 +2750,6 @@
   }
 }
 
-@keyframes cf-breathe {
-  from {
-    opacity: 0.85;
-    scale: 1 0.92;
-  }
-  to {
-    opacity: 1;
-    scale: 1.06 1.08;
-  }
-}
 
 @keyframes cf-blink {
   50% {
@@ -2804,6 +2792,7 @@
   .cf-nav { border-block-start: var(--ds-shape-border-hairline) solid var(--ds-border-accent); }
   .cf-page { padding-inline: var(--ds-layout-page-gutter); }
   .cf-page-body { padding-block: var(--ds-space-section-md); }
+  .cf-page-body > .cf-head { padding-inline: 0; }
   .cf-wordmark { white-space: nowrap; }
   .cf-wordmark-mark { border-radius: var(--ds-shape-radius-xs); }
   .cf-btn, .cf-input { min-height: var(--ds-space-control-lg); border-radius: var(--ds-shape-radius-sm); }
