@@ -106,7 +106,7 @@ agentRoutes.get("/agents/:id", async c => {
       <p>{entry.description}</p>
       <p class="cf-hint">{entry.project_name} · {entry.download_count} 次下载 · {entry.visibility === "public" ? "公开" : "项目可见"}</p>
     </PageHead>
-    <Panel title="AGENTS.md"><article class="cf-prose">{raw(await renderMarkdown(entry.markdown))}</article></Panel>
+    <Panel title="AGENTS.md"><article class="skill-doc">{raw(await renderMarkdown(entry.markdown))}</article></Panel>
     {manage ? <div class="ws-actions">
       <Form action={`${path}/visibility`}><Button variant="outline">设为{entry.visibility === "public" ? "项目可见" : "公开"}</Button></Form>
       <ConfirmDelete action={`${path}/delete`} label="删除规范" confirm="确认删除">将永久删除此规范。</ConfirmDelete>

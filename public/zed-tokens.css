@@ -1,0 +1,219 @@
+/*!
+ * Zed Industries 视觉语言 — CSS 令牌（由 design-spec/tokens/*.json 生成，勿手改）
+ * 生成方式：scripts 内 gen-css；改令牌请改 JSON 后重跑。
+ * light 为默认；dark 通过 [data-theme="dark"] 或系统偏好切换，语义重映射而非反色。
+ */
+:root {
+  --ds-accent-hover: #0640ac;
+  --ds-accent-ink: #004edb;
+  --ds-accent-solid: #004edb;
+  --ds-accent-tint: rgba(0,78,219,0.06);
+  --ds-bg-brand: #004edb;
+  --ds-bg-canvas: #f4f4f2;
+  --ds-bg-raised: #ffffff;
+  --ds-bg-scrim: rgba(0,4,10,0.55);
+  --ds-bg-sunken: #eee7e7;
+  --ds-border-accent: rgba(7,74,207,0.15);
+  --ds-border-hairline: #dadde2;
+  --ds-palette-blue-100: #e6effe;
+  --ds-palette-blue-400: #7ec6ff;
+  --ds-palette-blue-500: #0640ac;
+  --ds-palette-blue-600: #004edb;
+  --ds-palette-blue-700: #053794;
+  --ds-palette-green-500: #2fbf71;
+  --ds-palette-ink-100: #e1e3e7;
+  --ds-palette-ink-1000: #000000;
+  --ds-palette-ink-300: #a8adb7;
+  --ds-palette-ink-500: #868d9a;
+  --ds-palette-ink-600: #5c636f;
+  --ds-palette-ink-800: #393d45;
+  --ds-palette-line-200: #dadde2;
+  --ds-palette-line-blue-15: rgba(7,74,207,0.15);
+  --ds-palette-line-white-14: rgba(255,255,255,0.14);
+  --ds-palette-motif-blue: #1e69f6;
+  --ds-palette-motif-cyan: #93ccdc;
+  --ds-palette-motif-orange: #ff5500;
+  --ds-palette-motif-yellow: #ffd500;
+  --ds-palette-paper-050: #f7f7f2;
+  --ds-palette-paper-100: #f4f4f2;
+  --ds-palette-paper-150: #eee7e7;
+  --ds-palette-red-400: #e85d75;
+  --ds-palette-slate-850: #121316;
+  --ds-palette-slate-900: #111216;
+  --ds-palette-slate-950: #00040a;
+  --ds-palette-white: #ffffff;
+  --ds-state-error: #e85d75;
+  --ds-state-focus: #004edb;
+  --ds-state-success: #2fbf71;
+  --ds-text-body: #393d45;
+  --ds-text-muted: #5c636f;
+  --ds-text-on-accent: #ffffff;
+  --ds-text-primary: #000000;
+  --ds-text-subtle: #868d9a;
+  --ds-type-family-mono: 'Zed Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ds-type-family-sans: 'iA Writer Quattro S', 'IBM Plex Sans', system-ui, sans-serif;
+  --ds-type-family-serif: IBM Plex Serif, Georgia, 'Times New Roman', serif;
+  --ds-type-role-body-font: 'iA Writer Quattro S', 'IBM Plex Sans', system-ui, sans-serif;
+  --ds-type-role-body-size: 16px;
+  --ds-type-role-body-weight: 400;
+  --ds-type-role-body-lh: 1.5;
+  --ds-type-role-body-ls: -0.025em;
+  --ds-type-role-caption-font: 'iA Writer Quattro S', 'IBM Plex Sans', system-ui, sans-serif;
+  --ds-type-role-caption-size: 13px;
+  --ds-type-role-caption-weight: 400;
+  --ds-type-role-caption-lh: 1.5;
+  --ds-type-role-caption-ls: 0;
+  --ds-type-role-display-font: IBM Plex Serif, Georgia, 'Times New Roman', serif;
+  --ds-type-role-display-size: 32px;
+  --ds-type-role-display-weight: 380;
+  --ds-type-role-display-lh: 1.2;
+  --ds-type-role-display-ls: 0;
+  --ds-type-role-eyebrow-font: 'Zed Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  --ds-type-role-eyebrow-size: 11px;
+  --ds-type-role-eyebrow-weight: 400;
+  --ds-type-role-eyebrow-lh: 1.5;
+  --ds-type-role-eyebrow-ls: 0.05em;
+  --ds-type-role-heading-font: IBM Plex Serif, Georgia, 'Times New Roman', serif;
+  --ds-type-role-heading-size: 25.6px;
+  --ds-type-role-heading-weight: 390;
+  --ds-type-role-heading-lh: 1.25;
+  --ds-type-role-heading-ls: 0;
+  --ds-type-role-label-font: 'iA Writer Quattro S', 'IBM Plex Sans', system-ui, sans-serif;
+  --ds-type-role-label-size: 14px;
+  --ds-type-role-label-weight: 400;
+  --ds-type-role-label-lh: 1.43;
+  --ds-type-role-label-ls: -0.025em;
+  --ds-type-role-subheading-font: IBM Plex Serif, Georgia, 'Times New Roman', serif;
+  --ds-type-role-subheading-size: 20px;
+  --ds-type-role-subheading-weight: 400;
+  --ds-type-role-subheading-lh: 1.2;
+  --ds-type-role-subheading-ls: 0;
+  --ds-type-size-100: 11px;
+  --ds-type-size-200: 12px;
+  --ds-type-size-300: 13px;
+  --ds-type-size-400: 14px;
+  --ds-type-size-500: 16px;
+  --ds-type-size-600: 20px;
+  --ds-type-size-700: 25.6px;
+  --ds-type-size-800: 32px;
+  --ds-type-weight-bold: 700;
+  --ds-type-weight-medium: 500;
+  --ds-type-weight-regular: 400;
+  --ds-type-weight-serif-display: 380;
+  --ds-type-weight-serif-heading: 390;
+  --ds-space-control-lg: 44px;
+  --ds-space-control-md: 36px;
+  --ds-space-control-sm: 32px;
+  --ds-space-inset-lg: 24px;
+  --ds-space-inset-md: 16px;
+  --ds-space-inset-page: 48px;
+  --ds-space-inset-sm: 12px;
+  --ds-space-inset-xs: 4px;
+  --ds-space-section-lg: 72px;
+  --ds-space-section-md: 48px;
+  --ds-space-section-sm: 32px;
+  --ds-space-stack-lg: 24px;
+  --ds-space-stack-md: 16px;
+  --ds-space-stack-sm: 8px;
+  --ds-space-stack-xs: 4px;
+  --ds-space-step-001: 4px;
+  --ds-space-step-002: 8px;
+  --ds-space-step-003: 12px;
+  --ds-space-step-004: 16px;
+  --ds-space-step-006: 24px;
+  --ds-space-step-008: 32px;
+  --ds-space-step-012: 48px;
+  --ds-space-step-018: 72px;
+  --ds-space-unit: 4px;
+  --ds-shape-border-focus: 2px;
+  --ds-shape-border-hairline: 1px;
+  --ds-shape-border-key-edge: 2px;
+  --ds-shape-icon-grid: 24px;
+  --ds-shape-icon-stroke: 1.5px;
+  --ds-shape-icon-stroke-bold: 2px;
+  --ds-shape-radius-none: 0px;
+  --ds-shape-radius-pill: 999px;
+  --ds-shape-radius-sm: 4px;
+  --ds-shape-radius-xs: 2px;
+  --ds-motion-duration-base: 150ms;
+  --ds-motion-duration-instant: 70ms;
+  --ds-motion-duration-quick: 100ms;
+  --ds-motion-duration-slow: 400ms;
+  --ds-motion-ease-emphasized: cubic-bezier(0.32, 0.72, 0, 1);
+  --ds-motion-ease-entrance: cubic-bezier(0, 0, 0.2, 1);
+  --ds-motion-ease-exit: cubic-bezier(0.4, 0, 1, 1);
+  --ds-motion-ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-motion-policy-reduced-motion: prefers-reduced-motion: reduce → 移除 transform/位移/滚动视差，保留 opacity 与颜色过渡（时长 0.01ms），入场直接呈现终态;
+  --ds-motion-transition-reveal: opacity 400ms cubic-bezier(0, 0, 0.2, 1), transform 400ms cubic-bezier(0, 0, 0.2, 1);
+  --ds-motion-transition-state: background-color 100ms cubic-bezier(0.4, 0, 0.2, 1), color 100ms cubic-bezier(0.4, 0, 0.2, 1), border-color 100ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 100ms cubic-bezier(0.4, 0, 0.2, 1);
+  --ds-elevation-layer-content: 0;
+  --ds-elevation-layer-modal: 100;
+  --ds-elevation-layer-overlay: 30;
+  --ds-elevation-layer-sticky: 10;
+  --ds-elevation-shadow-frame: 6px 6px 0px 0px rgba(7,77,207,0.06);
+  --ds-elevation-shadow-ghost-edge: inset 0px -2px 0px 0px rgba(111,123,144,0.10);
+  --ds-elevation-shadow-key-inset: inset 0px -2px 0px 0px #053794;
+  --ds-elevation-shadow-key-lift: 0px 1px 3px 0px #e6effe;
+  --ds-layout-breakpoint-2xl: 1536px;
+  --ds-layout-breakpoint-lg: 1024px;
+  --ds-layout-breakpoint-md: 768px;
+  --ds-layout-breakpoint-sm: 640px;
+  --ds-layout-breakpoint-xl: 1280px;
+  --ds-layout-container-frame: 1120px;
+  --ds-layout-container-max: 1080px;
+  --ds-layout-container-reading: 690px;
+  --ds-layout-density-comfortable: comfortable;
+  --ds-layout-grid-columns: 12;
+  --ds-layout-grid-gap: 24px;
+  --ds-layout-page-gutter: 48px;
+  --ds-media-aspect-card: 16 / 10;
+  --ds-media-aspect-video: 16 / 9;
+  --ds-media-gradient-wash: radial-gradient(at 120% 75%, accent 8% → transparent 60%);
+  --ds-media-grain-amount: noise 叠加：单通道噪点，opacity 0.04–0.06，尺寸 ≥128px 平铺;
+  --ds-media-treatment-dither: halftone 网点：2px 网格 + 50% 抖动的品牌色块;
+  --ds-media-treatment-frame: 蓝图框架：1px 竖线按 12 列对齐 + 四角十字准星（+）+ 顶部整宽发丝线，全部用 color.border.hairline，不透明度 ≤0.6;
+  --ds-media-treatment-icons: 描边图标，24 栅格，stroke 1.5–2，round cap/join，单色 currentColor;
+  --ds-media-treatment-scanline: repeating-linear-gradient(180deg, #dadde2 0px, #dadde2 4px, transparent 4px, transparent 8px);
+
+  /* 字体栈（可被产品覆盖，但保持三族分工） */
+  --ds-font-serif: IBM Plex Serif, Georgia, "Times New Roman", serif;
+  --ds-font-sans: "iA Writer Quattro S", "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --ds-font-mono: "Zed Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+[data-theme="dark"] {
+  --ds-accent-ink: #7ec6ff;
+  --ds-accent-tint: rgba(126,198,255,0.08);
+  --ds-bg-canvas: #111216;
+  --ds-bg-raised: #00040a;
+  --ds-bg-sunken: #121316;
+  --ds-border-accent: rgba(126,198,255,0.24);
+  --ds-border-hairline: rgba(255,255,255,0.14);
+  --ds-text-body: #a8adb7;
+  --ds-text-muted: #868d9a;
+  --ds-text-primary: #e1e3e7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ds-accent-ink: #7ec6ff;
+    --ds-accent-tint: rgba(126,198,255,0.08);
+    --ds-bg-canvas: #111216;
+    --ds-bg-raised: #00040a;
+    --ds-bg-sunken: #121316;
+    --ds-border-accent: rgba(126,198,255,0.24);
+    --ds-border-hairline: rgba(255,255,255,0.14);
+    --ds-text-body: #a8adb7;
+    --ds-text-muted: #868d9a;
+    --ds-text-primary: #e1e3e7;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ds-motion-duration-instant: 0.01ms;
+    --ds-motion-duration-quick: 0.01ms;
+    --ds-motion-duration-base: 0.01ms;
+    --ds-motion-duration-slow: 0.01ms;
+  }
+}

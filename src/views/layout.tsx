@@ -115,6 +115,7 @@ export function Layout(props: {
   const origin = useContext(OriginContext);
   const locale = useLocale();
   const t = useT();
+  const path = useContext(ReturnPathContext).split("?")[0];
   return (
     <>
       {raw("<!DOCTYPE html>")}
@@ -122,21 +123,21 @@ export function Layout(props: {
         <head>
           <meta charset="utf-8" />
           <meta name="viewport" content="width=device-width, initial-scale=1" />
-          <meta name="theme-color" content="#fdfdfc" />
-          <title>{props.title} · skillsgist</title>
+          <meta name="color-scheme" content="light dark" />
+          <title>{props.title} · WeSkills</title>
           <link rel="icon" type="image/png" href="/favicon.png" />
           <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
           <meta name="description" content={t.layout.tagline} />
-          <meta property="og:site_name" content="skillsgist" />
+          <meta property="og:site_name" content="WeSkills" />
           <meta property="og:type" content="website" />
-          <meta property="og:title" content={`${props.title} · skillsgist`} />
+          <meta property="og:title" content={`${props.title} · WeSkills`} />
           <meta property="og:description" content={t.layout.tagline} />
-          <meta property="og:image" content={`${origin}/og.png`} />
-          <meta property="og:image:width" content="1200" />
-          <meta property="og:image:height" content="630" />
+          <meta property="og:image" content={`${origin}/logo.png`} />
+          <meta property="og:image:width" content="512" />
+          <meta property="og:image:height" content="512" />
           <meta property="og:image:alt" content={t.layout.ogImageAlt} />
-          <meta name="twitter:card" content="summary_large_image" />
-          <link rel="preload" href="/fonts/schibsted-grotesk-latin.woff2" as="font" type="font/woff2" crossorigin="anonymous" />
+          <meta name="twitter:card" content="summary" />
+          <link rel="stylesheet" href="/zed-tokens.css" />
           <link rel="stylesheet" href="/app.css" />
           <script src="/copy.js" defer />
           <script src="/fold.js" defer />
@@ -156,18 +157,22 @@ export function Layout(props: {
             <nav class="cf-nav-inner" aria-label={t.layout.mainNav}>
               <a href="/" class="cf-wordmark">
                 <img src="/logo.png" width="24" height="24" alt="" class="cf-wordmark-mark" />
-                skillsgist
+                WeSkills
               </a>
-              <a href="/agents" class="ws-nav-link">Agent 规范中心</a>
-              <a href="/rankings" class="ws-nav-link">排行榜</a>
+              <div class="ws-nav-links">
+                <a href="/" class="ws-nav-link" aria-current={path === "/" || path.includes("/s/") ? "page" : undefined}>Skills</a>
+                <a href="/agents" class="ws-nav-link" aria-current={path.startsWith("/agents") ? "page" : undefined}>Agent 规范</a>
+                <a href="/rankings" class="ws-nav-link" aria-current={path === "/rankings" ? "page" : undefined}>排行榜</a>
+                {props.user && <a href="/submissions" class="ws-nav-link" aria-current={path.startsWith("/submissions") ? "page" : undefined}>提交与审核</a>}
+              </div>
               <span class="flex-1" />
               {props.user ? (
                 <>
-                  <a href="/new" class="cf-btn cf-btn-primary">{t.layout.publish}</a>
+                  <a href="/new" class="cf-btn cf-btn-outline">{t.layout.publish}</a>
                   <AccountMenu user={props.user} />
                 </>
               ) : props.hideSignIn ? null : (
-                <a href="/login" class="cf-btn cf-btn-primary">{t.layout.signIn}</a>
+                <a href="/login" class="cf-btn cf-btn-outline">{t.layout.signIn}</a>
               )}
             </nav>
           </header>
@@ -179,14 +184,14 @@ export function Layout(props: {
               <p>
                 <a href="/" class="cf-footer-mark">
                   <img src="/logo.png" width="18" height="18" alt="" class="cf-wordmark-mark" />
-                  skillsgist
+                  WeSkills
                 </a>
                 <span>{t.layout.tagline}</span>
               </p>
               <div class="cf-footer-end">
                 <LanguageForm />
                 <nav class="cf-footer-links" aria-label={t.layout.footerNav}>
-                  <a href="https://github.com/Qsnh/skillsgist">{t.layout.source}</a>
+                  <a href="https://github.com/comeonzhj/WeSkills">{t.layout.source}</a>
                 </nav>
               </div>
             </div>

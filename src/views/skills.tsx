@@ -93,7 +93,7 @@ function HeroLede(props: { user: Viewer | null }) {
   if (!props.user) {
     return (
       <p class="cf-hero-lede">
-        {t.skills.heroAnon(<code>npx skillsgist</code>, <a href="/login">{t.layout.signIn}</a>)}
+        {t.skills.heroAnon(<code>weskills</code>, <a href="/login">{t.layout.signIn}</a>)}
       </p>
     );
   }
@@ -286,7 +286,9 @@ function MoveSkill(props: { skill: ListedSkill; targets: Array<{ slug: string; n
 }
 
 function addCommand(url: string) {
-  return `skillsgist add ${url}`;
+  const source = new URL(url);
+  const [, , project, , skill] = source.pathname.split("/");
+  return project && skill ? `weskills pull --server ${source.origin} --project ${project} --skill ${skill}` : `skillsgist add ${url}`;
 }
 
 function Command(props: { url: string }) {
