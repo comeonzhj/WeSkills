@@ -1,0 +1,13 @@
+node_modules/
+public/app.css
+.wrangler/
+dist/
+.dev.vars
+docs/superpowers/
+.impeccable/review/
+.impeccable/questions/
+
+/references/
+/.env
+/data/
+/.DS_Store

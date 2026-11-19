@@ -1,0 +1,70 @@
+{
+  "name": "skillsgist",
+  "version": "1.0.0",
+  "description": "A private Agent Skills registry you self-host on Cloudflare.",
+  "keywords": [
+    "agent-skills",
+    "skills",
+    "claude-code",
+    "ai-agents",
+    "registry",
+    "self-hosted",
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "cloudflare-r2",
+    "hono"
+  ],
+  "homepage": "https://github.com/Qsnh/skillsgist#readme",
+  "bugs": {
+    "url": "https://github.com/Qsnh/skillsgist/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Qsnh/skillsgist.git"
+  },
+  "license": "MIT",
+  "author": "Qsnh",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "test": "vitest run",
+    "dev": "concurrently \"npx @tailwindcss/cli -i src/app.css -o public/app.css --watch\" \"wrangler dev\"",
+    "build": "npx @tailwindcss/cli -i src/app.css -o public/app.css --minify",
+    "deploy": "npm run db:migrate && npm run build && wrangler deploy",
+    "db:migrate": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local",
+    "reset-password": "node scripts/reset-password.mjs",
+    "typecheck": "tsc --noEmit",
+    "verify:cli": "node scripts/verify-cli.mjs",
+    "logo": "node scripts/export-logo.mjs",
+    "screenshots": "node scripts/screenshots.mjs",
+    "fixtures": "./scripts/make-fixtures.sh"
+  },
+  "cloudflare": {
+    "bindings": {
+      "SESSION_SECRET": {
+        "description": "Signs session cookies. Use a long random value, for example the output of `openssl rand -hex 32`. Changing it later signs everyone out."
+      }
+    }
+  },
+  "dependencies": {
+    "hono": "^4.13.8",
+    "marked": "^18.0.13",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-pool-workers": "^0.22.0",
+    "@cloudflare/workers-types": "^5.20260922.1",
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^26.6.2",
+    "concurrently": "^10.0.5",
+    "fflate": "^0.8.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vitest": "^4.1.11",
+    "wrangler": "^4.136.1"
+  }
+}
