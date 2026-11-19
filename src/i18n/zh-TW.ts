@@ -4,8 +4,8 @@ const ACTIONS: Record<SkillAction, string> = { modify: "修改", move: "移動",
 
 export const zhTW: Messages = {
   layout: {
-    tagline: "在 Cloudflare Workers 上執行的私有 Agent Skills 儲存庫。",
-    ogImageAlt: "skillsgist：你的私有 Agent Skills 儲存庫",
+    tagline: "團隊 Skills 與 Agent 規範工作台。",
+    ogImageAlt: "WeSkills",
     skip: "跳至主要內容",
     mainNav: "主要導覽",
     footerNav: "頁尾",

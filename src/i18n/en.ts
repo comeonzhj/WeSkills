@@ -6,8 +6,8 @@ export type SkillAction = "modify" | "move" | "delete" | "edit" | "update";
 
 export const en = {
   layout: {
-    tagline: "A private registry for Agent Skills, running on Cloudflare Workers.",
-    ogImageAlt: "skillsgist: your private Agent Skills registry",
+    tagline: "Team workspace for Skills and Agent standards.",
+    ogImageAlt: "WeSkills",
     skip: "Skip to content",
     mainNav: "Main",
     footerNav: "Footer",

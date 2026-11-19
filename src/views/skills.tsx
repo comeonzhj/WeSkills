@@ -1,4 +1,4 @@
-import { membershipIn } from "../auth";
+import { canAccessProject } from "../auth";
 import { Form } from "../csrf";
 import { useLocale, useT } from "../i18n";
 import { formatCount, formatStamp } from "../i18n/format";
@@ -285,17 +285,7 @@ function MoveSkill(props: { skill: ListedSkill; targets: Array<{ slug: string; n
   );
 }
 
-function addCommand(url: string) {
-  const source = new URL(url);
-  const [, , project, , skill] = source.pathname.split("/");
-  return project && skill ? `weskills pull --server ${source.origin} --project ${project} --skill ${skill}` : `skillsgist add ${url}`;
-}
-
-function Command(props: { url: string }) {
-  return <CodeBlock raised>npx {addCommand(props.url)}</CodeBlock>;
-}
-
-function Install(props: { url: string; slug: string }) {
+function Install(props: { command: string }) {
   const t = useT();
   return (
     <div class="cf-install">
@@ -311,11 +301,11 @@ function Install(props: { url: string; slug: string }) {
         </label>
       </fieldset>
       <div id="install-command" data-mode="command" role="group" aria-label={t.skills.installCommand}>
-        <Command url={props.url} />
+        <CodeBlock raised>{props.command}</CodeBlock>
       </div>
       <div id="install-prompt" data-mode="prompt" role="group" aria-label={t.skills.installPrompt}>
         <CodeBlock raised prompt={false}>
-          {t.skills.agentPrompt(`npx -y ${addCommand(props.url)} --skill ${props.slug} -g -y`)}
+          {t.skills.agentPrompt(props.command)}
         </CodeBlock>
       </div>
     </div>
@@ -338,21 +328,15 @@ export function SkillPage(props: {
   const files = JSON.parse(version.files) as Array<{ path: string; size: number }>;
   const isLatest = version.version === skill.latest_version;
   const path = skillPath(skill);
-  const membership = props.user ? membershipIn(props.user, skill.project) : undefined;
-  const isPublic = skill.visibility === "public";
-  const base = isPublic || membership !== undefined ? `${props.origin}${projectPath(skill.project)}` : null;
-  const address = (from: string) => `${from}/.well-known/agent-skills/${skill.slug}`;
+  const canInstall = skill.visibility === "public" || (props.user !== null && canAccessProject(props.user, skill.project));
+  const command = `weskills pull --server ${props.origin} --project ${skill.project} --skill ${skill.slug}`;
   return (
     <Layout title={fullName(skill)} user={props.user} bare>
       <section class="cf-hero" aria-labelledby="skill-title">
         <div class="cf-hero-inner cf-hero-start">
           <h1 id="skill-title" class="cf-hero-title cf-skill-title">{fullName(skill)}</h1>
           <p class="cf-hero-lede">{version.description}</p>
-          {base === null ? null : isLatest ? (
-            <Install url={address(base)} slug={skill.slug} />
-          ) : (
-            <Command url={address(base)} />
-          )}
+          {canInstall && isLatest ? <Install command={command} /> : null}
         </div>
       </section>
 

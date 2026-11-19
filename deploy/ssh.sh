@@ -34,13 +34,15 @@ mkdir -p "$stage"/{dist,public,migrations}
 cp dist/server.cjs "$stage/dist/"
 cp public/{app.css,zed-tokens.css,logo.png,favicon.png,apple-touch-icon.png,copy.js,fold.js,dismiss.js} "$stage/public/"
 cp migrations/*.sql "$stage/migrations/"
-tar -C "$stage" -czf "$stage/release.tar.gz" dist public migrations
+tar_options=()
+if [[ $(uname -s) == Darwin ]]; then tar_options=(--no-xattrs --no-mac-metadata); fi
+COPYFILE_DISABLE=1 tar "${tar_options[@]}" -C "$stage" -czf "$stage/release.tar.gz" dist public migrations
 "${ssh_cmd[@]}" "cat > '$remote_stage/release.tar.gz'" < "$stage/release.tar.gz"
 "${ssh_cmd[@]}" "cat > '$remote_stage/install.sh'" < deploy/install.sh
 "${ssh_cmd[@]}" "if [ \$(id -u) -eq 0 ]; then bash '$remote_stage/install.sh' '$remote_stage/release.tar.gz' '$port' '$domain'; else sudo -n bash '$remote_stage/install.sh' '$remote_stage/release.tar.gz' '$port' '$domain'; fi"
 if [[ -z $domain ]]; then
   printf 'Open an SSH tunnel with local port %s to server port %s, then use http://127.0.0.1:%s/setup\n' "$port" "$port" "$port"
 else
-  curl --fail --silent --show-error --retry 3 --retry-connrefused "https://$domain/healthz"
+  curl --max-time 10 --fail --silent --show-error --retry 3 --retry-all-errors "https://$domain/healthz"
   printf '\nOpen https://%s/setup to initialize WeSkills.\n' "$domain"
 fi

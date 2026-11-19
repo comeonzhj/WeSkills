@@ -51,6 +51,7 @@ async function review(c: Ctx) {
   const latest = current ? await getVersion(c.env.DB, current.project, current.slug, current.latest_version) : null;
   const base = latest ? await c.env.BUCKET.get(latest.r2_key) : null;
   const before = base ? await readZip(new Uint8Array(await base.arrayBuffer())) : new Map<string, Uint8Array>();
+  if (latest && !before.has("SKILL.md")) before.set("SKILL.md", new TextEncoder().encode(latest.skill_md));
   const after = entry.kind === "skill" ? await readZip(archiveBytes(entry))
     : new Map([["AGENTS.md", new TextEncoder().encode(entry.markdown)]]);
   const file = c.req.query("file") ?? (entry.kind === "skill" ? "SKILL.md" : "AGENTS.md");
@@ -78,6 +79,7 @@ async function review(c: Ctx) {
     <a href="/submissions">← 提交与审核</a>
     <PageHead title={entry.name} error={stale ? "线上版本已变化，请让提交者合并现行版本后重新提交。" : undefined}>
       {entry.project} · {entry.username} · <code>{entry.author_id}-{entry.id}</code>
+      {!current && <p class="cf-hint">发布后{entry.visibility === "public" ? "公开可见" : "项目成员可见"}</p>}
     </PageHead>
     <Panel title="版本差异" aside={entry.kind === "skill" && <a href={`/submissions/${entry.id}/archive`}>下载提交归档</a>}>
       {current && <p class="cf-hint"><a href={skillPath(current)}>查看现行 v{current.latest_version}</a></p>}
@@ -120,14 +122,14 @@ submissionRoutes.post("/submissions/:id/reject", requireUser, async c => {
 });
 
 submissionRoutes.post("/submissions/:id/approve", requireUser, async c => {
-    const entry = await lookup(c);
-    if (!entry) return c.notFound();
-    try {
-      const path = entry.kind === "skill" ? skillPath(await approveSkill(c.env, entry))
-        : await releaseStandard(c.env.DB, entry, entry);
-      return c.redirect(path, 303);
-    } catch (error) {
-      if (error instanceof SubmissionError) return c.text(error.message, error.status);
-      throw error;
-    }
-  });
+  const entry = await lookup(c);
+  if (!entry) return c.notFound();
+  try {
+    const path = entry.kind === "skill" ? skillPath(await approveSkill(c.env, entry))
+      : await releaseStandard(c.env.DB, entry, entry);
+    return c.redirect(path, 303);
+  } catch (error) {
+    if (error instanceof SubmissionError) return c.text(error.message, error.status);
+    throw error;
+  }
+});

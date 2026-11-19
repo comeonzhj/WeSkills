@@ -36,7 +36,7 @@ export function NewSkillPage(props: {
   return (
     <Layout title={t.publish.title} user={props.user}>
       <div class="cf-narrow">
-        <PageHead title={t.publish.title} error={props.error} />
+        <PageHead title="提交技能" error={props.error}>项目管理员的提交会直接发布，其他项目成员的提交进入审核。</PageHead>
         {props.projects.length === 0 ? (
           <div class="cf-frame">
             <div class="cf-empty">

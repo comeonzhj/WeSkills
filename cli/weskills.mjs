@@ -84,15 +84,18 @@ function localPath(path) {
   return parts
 }
 
-async function collect(root) {
+async function collect(root, preserve = false) {
   const files = new Map()
   let total = 0
   async function visit(relative) {
     const dir = join(root, relative)
     if (!(await lstat(dir)).isDirectory()) throw new Error('Skill directory must be a real directory')
     for (const item of await readdir(dir, { withFileTypes: true })) {
-      if (reserved.has(item.name)) continue
       const path = relative ? `${relative}/${item.name}` : item.name
+      if (reserved.has(item.name)) {
+        if (preserve && path !== manifest) files.set(path, Buffer.from('unmanaged local file'))
+        continue
+      }
       localPath(path)
       if (item.isDirectory()) {
         await visit(path)
@@ -170,7 +173,7 @@ async function replace(root, entries, metadata, previousFingerprint, existed) {
     }
     await writeFile(join(staged, manifest), JSON.stringify(metadata, null, 2) + '\n', { mode: 0o600 })
     if (existed) {
-      if (fingerprint(await collect(root)) !== previousFingerprint) throw new Error('Local files changed during download')
+      if (fingerprint(await collect(root, true)) !== previousFingerprint) throw new Error('Local files changed during download')
       await rename(root, backup)
     } else {
       try { await lstat(root); throw new Error('Destination appeared during download') }
@@ -202,7 +205,7 @@ async function main() {
   })
   if (!command || values.help || command === 'help') { console.log(help); return }
   if (!['login', 'logout', 'pull', 'sync', 'upload'].includes(command)) throw new Error(`Unknown command: ${command}`)
-  let root = resolve(values.dir ?? (command === 'pull' ? join('.agents', 'skills', segment(values.skill, 'skill name')) : '.'))
+  const root = resolve(values.dir ?? (command === 'pull' ? join('.agents', 'skills', segment(values.skill, 'skill name')) : '.'))
   let exists = true
   try {
     if (!(await lstat(root)).isDirectory()) throw new Error('Skill directory must be a real directory')
@@ -259,7 +262,7 @@ async function main() {
     if (metadata?.digest === latest.digest && metadata.version === latest.version) {
       result = { status: 'current', version: latest.version }
     } else {
-      const files = exists ? await collect(root) : new Map()
+      const files = exists ? await collect(root, true) : new Map()
       const hash = fingerprint(files)
       if (exists && (metadata ? hash !== metadata.fingerprint : (await readdir(root)).length)) {
         if (command !== 'sync') throw new Error('Destination contains local files or edits')

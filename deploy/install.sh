@@ -61,15 +61,16 @@ if [[ -z $node_bin ]] || ! "$node_bin" -e 'process.exit(Number(+process.versions
       trap 'rm -rf "$download"' EXIT
       cd "$download"
       upstream=https://nodejs.org/dist/latest-v24.x
-      curl -fsS "$upstream/SHASUMS256.txt" -o SHASUMS256.txt
+      curl --connect-timeout 10 --max-time 120 -fsS "$upstream/SHASUMS256.txt" -o SHASUMS256.txt
       grep -E "^[a-f0-9]{64}  node-v24\.[0-9]+\.[0-9]+-linux-$arch\.tar\.xz$" SHASUMS256.txt > selected.sha256
       package=$(awk '{print $2}' selected.sha256)
-      curl -fsS "$upstream/$package" -o "$package"
+      curl --connect-timeout 10 --max-time 120 -fsS "$upstream/$package" -o "$package"
       sha256sum -c selected.sha256
       mkdir -p "$base/node"
       tar -xJf "$package" --strip-components=1 -C "$base/node"
     )
   fi
+  chmod -R a+rX "$base/node"
 fi
 chmod 755 "$base"
 id weskills >/dev/null 2>&1 || useradd --system --user-group --home-dir "$data" --shell /usr/sbin/nologin weskills
@@ -148,7 +149,7 @@ ln -sfn "$release" "$base/current"
 systemctl daemon-reload
 systemctl enable weskills
 systemctl restart weskills
-curl -fsS --retry 10 --retry-connrefused --retry-delay 1 "http://127.0.0.1:$port/healthz" >/dev/null
+curl --noproxy "*" --max-time 10 -fsS --retry 10 --retry-connrefused --retry-delay 1 "http://127.0.0.1:$port/healthz" >/dev/null
 
 if [[ -n $domain ]]; then
   acme="$base/acme"
@@ -193,7 +194,7 @@ server {
 }
 NGINX
   "${nginx[@]}" -t && "${nginx[@]}" -s reload
-  curl -fsS --retry 5 --retry-connrefused --retry-delay 1 --resolve "$domain:443:127.0.0.1" "https://$domain/healthz" >/dev/null
+  curl --noproxy "*" --max-time 10 -fsS --retry 8 --retry-all-errors --retry-delay 1 --resolve "$domain:443:127.0.0.1" "https://$domain/healthz" >/dev/null
   renewal=/etc/letsencrypt/renewal-hooks/deploy/weskills-$domain
   mkdir -p "$(dirname "$renewal")"
   {

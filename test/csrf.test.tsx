@@ -53,6 +53,11 @@ const PROTECTED: Record<string, (ids: { userId: string; slug: string }) => strin
   "POST /admin/users/:id/api-token": ({ userId }) => `/admin/users/${userId}/api-token`,
   "POST /admin/users/:id/api-token/revoke": ({ userId }) => `/admin/users/${userId}/api-token/revoke`,
   "POST /admin/users/:id/delete": ({ userId }) => `/admin/users/${userId}/delete`,
+  "POST /agents/new": () => "/agents/new",
+  "POST /agents/:id/visibility": () => "/agents/123/visibility",
+  "POST /agents/:id/delete": () => "/agents/123/delete",
+  "POST /submissions/:id/reject": () => "/submissions/123/reject",
+  "POST /submissions/:id/approve": () => "/submissions/123/approve",
   "POST /new": () => "/new",
   "POST /projects/new": () => "/projects/new",
   "POST /p/:project/install-key": () => "/p/default/install-key",
@@ -77,6 +82,16 @@ const PROTECTED: Record<string, (ids: { userId: string; slug: string }) => strin
 // the route only reads.
 const READ_ONLY_GETS = new Set([
   "GET /healthz",
+  "GET /agents",
+  "GET /agents/new",
+  "GET /agents/:id",
+  "GET /agents/:id/download",
+  "GET /rankings",
+  "GET /submissions",
+  "GET /submissions/:id",
+  "GET /submissions/:id/archive",
+  "GET /api/projects/:project/skills/:slug",
+  "GET /api/projects/:project/skills/:slug/archive/:file",
   "GET /.well-known/agent-skills/index.json",
   "GET /.well-known/skills/index.json",
   // The CLI's single-install fallback of appending another .well-known layer to the whole URL. Read-only: returns the narrowed index.

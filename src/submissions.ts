@@ -105,6 +105,7 @@ async function releaseSkill(env: Env, opts: {
 export async function approveSkill(env: Env, entry: Submission) {
   const existing = await getSkill(env.DB, entry.project, entry.slug);
   const baseVersion = existing?.latest_version ?? 0;
+  if (entry.base_version !== baseVersion) throw new SubmissionError("The published version or submission has changed", 409);
   const normalized = await normalizeUpload(archiveBytes(entry), markdown => stampContribution(markdown, entry.author_id, baseVersion + 1), true);
   return releaseSkill(env, { project: entry.project, visibility: entry.visibility, baseVersion },
     normalized, entry.author_id, existing?.id, entry);
