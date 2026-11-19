@@ -34,7 +34,7 @@ export function openDatabase(directory, migrations) {
       this.args = args
     }
     bind(...args) {
-      return new Statement(this.sql, args)
+      return new Statement(this.sql, args.map(value => value instanceof ArrayBuffer ? new Uint8Array(value) : value))
     }
     statement() {
       // node:sqlite binds numbered placeholders by name.

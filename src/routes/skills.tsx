@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import {
-  canManage, canPublishIn, canView, currentUser, publishableProjects, requireManagedSkill, requireUser, skillScope,
+  canAccessProject, canManage, canPublishIn, canView, currentUser, publishableProjects, requireManagedSkill, requireUser, skillScope,
 } from "../auth";
 import type { AppEnv, Ctx } from "../auth";
 import { page } from "../csrf";
@@ -64,6 +64,7 @@ skillsRoutes.get("/p/:project/s/:slug", async (c) => {
       versions={versions}
       origin={new URL(c.req.url).origin}
       canManage={manage}
+      canSubmit={user !== null && canAccessProject(user, project)}
       moveTargets={targets}
     />,
   );

@@ -1,3 +1,5 @@
+import { parseFragment, serialize, html as htmlConstants } from "parse5";
+import type { DefaultTreeAdapterTypes } from "parse5";
 import { marked } from "marked";
 import { stripFrontmatter } from "../skills/frontmatter";
 
@@ -39,30 +41,24 @@ function isSafeUrlValue(value: string): boolean {
 export async function renderMarkdown(md: string): Promise<string> {
   const html = marked.parse(md, { async: false, gfm: true, breaks: false }) as string;
 
-  const rewritten = new HTMLRewriter()
-    .on("*", {
-      element(el) {
-        if (!ALLOWED_TAGS.has(el.tagName)) {
-          el.remove();
-          return;
-        }
-        for (const [name, value] of [...el.attributes]) {
-          if (name === "style" || name.startsWith("on")) {
-            el.removeAttribute(name);
-            continue;
-          }
-          if (URL_ATTRS.has(name) && !isSafeUrlValue(value)) {
-            el.removeAttribute(name);
-          }
-        }
-      },
-    })
-    .transform(new Response(html));
-
-  return await rewritten.text();
+  const fragment = parseFragment(html);
+  sanitizeChildren(fragment);
+  return serialize(fragment);
 }
 
-export const RENDER_REVISION = 1;
+function sanitizeChildren(parent: DefaultTreeAdapterTypes.ParentNode): void {
+  parent.childNodes = parent.childNodes.filter(node => {
+    if (!("tagName" in node)) return node.nodeName === "#text";
+    if (node.namespaceURI !== htmlConstants.NS.HTML || !ALLOWED_TAGS.has(node.tagName)) return false;
+    node.attrs = node.attrs.filter(({ name, value }) =>
+      name !== "style" && !name.startsWith("on") && (!URL_ATTRS.has(name) || isSafeUrlValue(value)),
+    );
+    sanitizeChildren(node);
+    return true;
+  });
+}
+
+export const RENDER_REVISION = 2;
 
 export function renderSkillMd(skillMd: string): Promise<string> {
   return renderMarkdown(stripFrontmatter(skillMd));

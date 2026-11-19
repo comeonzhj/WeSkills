@@ -409,16 +409,18 @@ export async function listPublishedForIndex(
 export async function insertVersion(
   db: D1Database,
   input: InsertVersionInput,
+  options?: { version: number; key: string; before?: D1PreparedStatement[]; after?: D1PreparedStatement[] },
 ): Promise<{ version: number; r2Key: string }> {
   const now = Date.now();
-  const next = await db
+  const next = options ? null : await db
     .prepare("SELECT COALESCE(MAX(version), 0) + 1 AS n FROM versions WHERE skill_id = ?")
     .bind(input.skillId)
     .first<{ n: number }>();
-  const version = next?.n ?? 1;
-  const r2Key = `artifacts/${input.skillId}/${version}.zip`;
+  const version = options?.version ?? next?.n ?? 1;
+  const r2Key = options?.key ?? `artifacts/${input.skillId}/${version}.zip`;
 
   await db.batch([
+    ...options?.before ?? [],
     db
       .prepare(
         `INSERT INTO skills (id, project, slug, description, visibility, owner_id, latest_version, created_at, updated_at)
@@ -440,6 +442,7 @@ export async function insertVersion(
         input.skillId, version, input.digest, input.size, input.name, input.description,
         input.skill_md, input.html, input.html_rev, input.files, r2Key, input.authorId, now,
       ),
+    ...options?.after ?? [],
   ]);
 
   return { version, r2Key };

@@ -188,8 +188,7 @@ export function canView(viewer: Viewer | null, skill: Pick<SkillRow, "visibility
 }
 
 export function canManage(viewer: Viewer, skill: Pick<SkillRow, "project" | "owner_id">): boolean {
-  if (canManageProject(viewer, skill.project)) return true;
-  return skill.owner_id === viewer.id && canPublishIn(viewer, skill.project);
+  return canManageProject(viewer, skill.project);
 }
 
 export const roleOf = (value: unknown): "admin" | "member" => (value === "admin" ? "admin" : "member");

@@ -59,6 +59,7 @@ function AccountMenu(props: { user: UserRow }) {
       </summary>
       <div class="cf-menu-panel">
         <a href="/me" class="cf-menu-item">{t.layout.account}</a>
+        <a href="/submissions" class="cf-menu-item">提交与审核</a>
         <a href="/projects" class="cf-menu-item">{t.layout.projects}</a>
         {props.user.role === "admin" ? <a href="/admin/users" class="cf-menu-item">{t.layout.users}</a> : null}
         {props.user.role === "admin" ? <a href={ADMIN_DOWNLOADS_PATH} class="cf-menu-item">{t.layout.downloads}</a> : null}

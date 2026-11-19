@@ -78,11 +78,10 @@ async function extract(bytes: Uint8Array): Promise<Map<string, Uint8Array>> {
   return new Map([["SKILL.md", new TextEncoder().encode(text)]]);
 }
 
-export async function normalizeUpload(bytes: Uint8Array): Promise<NormalizedSkill> {
+export async function normalizeUpload(bytes: Uint8Array, transform?: (markdown: string) => string, storedArchive = false): Promise<NormalizedSkill> {
   if (bytes.length === 0) throw new UploadError(issue("emptyUpload"));
-  if (bytes.length > MAX_UPLOAD_BYTES) {
-    throw new UploadError(issue("tooLarge", bytes.length, MAX_UPLOAD_BYTES));
-  }
+  const maximum = storedArchive ? MAX_UNPACKED_BYTES + 256 * 1024 : MAX_UPLOAD_BYTES;
+  if (bytes.length > maximum) throw new UploadError(issue("tooLarge", bytes.length, maximum));
 
   const raw = await extract(bytes);
 
@@ -110,7 +109,14 @@ export async function normalizeUpload(bytes: Uint8Array): Promise<NormalizedSkil
 
   const skillMdBytes = filtered.get("SKILL.md");
   if (!skillMdBytes) throw new UploadError(issue("missingSkillMd"));
-  const skillMd = new TextDecoder().decode(skillMdBytes);
+  const original = new TextDecoder().decode(skillMdBytes);
+  const skillMd = transform ? transform(original) : original;
+  if (skillMd !== original) {
+    const updated = new TextEncoder().encode(skillMd);
+    const total = unpacked - skillMdBytes.byteLength + updated.byteLength;
+    if (total > MAX_UNPACKED_BYTES) throw new UploadError(issue("unpackedTooLarge", total, MAX_UNPACKED_BYTES));
+    filtered.set("SKILL.md", updated);
+  }
 
   const { data } = parseFrontmatter(skillMd);
   if (!isValidSkillName(data.name)) {

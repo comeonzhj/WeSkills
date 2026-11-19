@@ -327,6 +327,7 @@ export function SkillPage(props: {
   versions: VersionSummary[];
   origin: string;
   canManage: boolean;
+  canSubmit?: boolean;
   moveTargets: Array<{ slug: string; name: string }>;
 }) {
   const locale = useLocale();
@@ -361,6 +362,7 @@ export function SkillPage(props: {
               {t.skills.downloadZip}
             </a>
           </div>
+          {props.canSubmit && !props.canManage ? <a href={`${path}/upload`} class="cf-btn cf-btn-outline">提交优化版本</a> : null}
           {props.canManage ? (
             <>
               <div class="cf-toolbar-group">
