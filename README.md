@@ -1,69 +1,72 @@
-<img src="docs/images/logo.png" width="72" height="72" alt="">
+<img src="public/logo.png" width="64" height="64" alt="WeSkills">
 
-# skillsgist
+# WeSkills
 
-A private Agent Skills registry you self-host on Cloudflare.
+企业内部的 Skills 与 Agent 规范管理台。员工可以浏览团队资源、静默更新 Skills，并提交改进。项目管理员负责审核、发布和管理成员，实例管理员负责项目与账号管理。
 
-[![CI](https://github.com/Qsnh/skillsgist/actions/workflows/ci.yml/badge.svg)](https://github.com/Qsnh/skillsgist/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+## 快速开始
 
-Keep your team's Agent Skills in one place that only your team can see. Upload a skill in the browser, and anyone with access installs it into Claude Code, Codex, Cursor and dozens of other coding agents with one command:
+需要 Node.js 24+ 和 npm。
 
 ```bash
-npx skillsgist add https://skills.example.com/p/<project>
+npm ci
+cp .env.example .env
+# 将 .env 中的 SESSION_SECRET 替换为 openssl rand -hex 32 的输出
+npm run dev
 ```
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Qsnh/skillsgist)
+打开 [本地初始化页面](http://127.0.0.1:8787/setup)，创建首个实例管理员。通过「项目」和「账号管理」添加项目与成员。
 
-![The skillsgist home page: a search box and the skill list](docs/images/home.png)
+## 功能
 
-## Is it for you?
+| 功能 | 使用方式 |
+| --- | --- |
+| Skills | 搜索项目内可见技能，预览 Markdown，查看版本历史，下载归档或通过 CLI 安装 |
+| 提交和审核 | 项目成员可提交新技能和更新。管理员逐文件查看与现行版的差异，审核通过后发布，也可删除待审核提交 |
+| Agent 规范 | 浏览、搜索、提交和下载 `AGENTS.md`，将下载文件放入目标工作区根目录 |
+| 排行榜 | 查看有权访问的 Skills 与 Agent 规范下载排行，以及可访问项目里的 Skills 合并贡献排行 |
+| 账号与权限 | 实例管理员维护账号与项目，项目管理员维护成员、角色和资源，设备登录按所选项目授权 |
 
-skillsgist is a good fit if:
+## CLI
 
-- your team writes its own skills and wants to keep them out of public registries;
-- you want them on a Cloudflare account you own, not on someone else's service;
-- different groups need different access, and each group decides who sees its skills;
-- you would rather manage skills, versions and people in web pages than in config files.
+从 GitHub 安装，或在源码目录运行 `npm install -g .`。
 
-It is not a good fit if:
+```bash
+npm install -g git+https://github.com/comeonzhj/WeSkills.git
+weskills login --server https://skills.example.com --project engineering
+weskills pull --server https://skills.example.com --project engineering --skill release-notes
+weskills sync --dir .agents/skills/release-notes
+weskills upload --dir .agents/skills/release-notes
+```
 
-- you are looking for a public marketplace of other people's skills;
-- you cannot use Cloudflare, since skillsgist runs only there;
-- you want a hosted service, since there is none and you deploy your own copy;
-- your skills are large: an upload is capped at 2 MB, 8 MB unpacked and 200 files, to fit Cloudflare's free plan.
+`pull`、`sync` 和 `upload` 成功时默认无输出。用 `--json` 查看结果，错误写入 stderr。默认安装到当前项目的 `.agents/skills/<skill>`，也可通过 `--dir` 指定目标。首次安装保存来源、版本和文件指纹。后续同步会自动更新未修改的目录，并保留检测到的本地修改。详见 [使用与审核](docs/usage.md)。
 
-## What you get
+## 一键 SSH 部署
 
-- **Private by default.** A new skill is visible only to its project's members. Making one public is a deliberate switch on that one skill.
-- **Projects with their own people.** Skills and members are grouped by project. Project admins manage their own members and skills, and decide who may publish.
-- **One-command installs.** Every skill page shows its install command, and a prompt you paste into your agent to have it install the skill and use it right away. A computer signs in once through the browser, for only the projects you tick, and keys never appear in a link.
-- **Publishing in the browser.** Upload a `.zip`, a `.tar.gz` or a single `SKILL.md`, or edit `SKILL.md` right on the page.
-- **Every version kept.** Each publish is a new numbered version. Older versions stay viewable and downloadable, and publishing one again rolls back.
-- **Search** across skill names, descriptions and contents.
-- **Automation.** Publish from CI with an API token, and install in CI with a project's install key.
-- **Works with the standard tools.** Public skills also install with the stock `npx skills`.
-- **In four languages.** English, Simplified Chinese, Traditional Chinese and Japanese.
-- **Cheap to run.** One Cloudflare Worker, one D1 database and one R2 bucket, sized for the Workers Free plan.
+将下列命令中的地址、账号、密钥路径和域名替换成你的配置，可直接交给 Agent 执行。
 
-## Get started
+```bash
+./deploy/ssh.sh SERVER_IP SSH_USER /absolute/path/to/ssh-key skills.example.com
+```
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Qsnh/skillsgist)
+脚本在目标服务器安装独立的 systemd 服务，有域名时通过 Nginx 和 Let's Encrypt 提供 HTTPS。省略域名可使用 SSH 隧道。宝塔 Nginx 和常规 Nginx 的处理方式、初始化口令和升级方法见 [部署说明](docs/deploy.md)。
 
-1. Click the button. Cloudflare copies this repository into your GitHub or GitLab account, creates the database and storage, and deploys it. When it asks for `SESSION_SECRET`, paste a long random value, such as the output of `openssl rand -hex 32`.
-2. Open `/setup` on the new site and create the first admin.
-3. Create a project, upload a skill, and share the install command on its page.
+## 开发
 
-To deploy from a terminal, use your own domain or upgrade later, see [Deploy and run](docs/deploy.md).
+```bash
+npm run typecheck
+npm test
+```
 
-## Documentation
+- `src/routes/` 包含 Hono 路由，其中包括现有的项目、账号、设备认证和 registry 入口。
+- `server/` 提供 Node 服务、SQLite 存储适配和本地归档存储。
+- `migrations/` 包含按文件名依次应用的数据库迁移。
+- `cli/` 包含设备登录、下载、更新和提交命令。
+- `deploy/` 包含构建、SSH 传输和服务器安装脚本。
+- `npm test` 在临时数据目录启动实际生产构建，验证设备登录、项目权限、CLI、审批、Agent 规范和排行。
 
-- [Install and publish](docs/usage.md): signing in, installing in CI, publishing from a terminal or CI
-- [Projects, accounts and roles](docs/usage.md#projects-accounts-and-roles): who can see, publish and manage what
-- [Deploy and run](docs/deploy.md): Wrangler, custom domains, rate limiting, limits, upgrades and password resets
-- [skillsgist CLI](https://github.com/Qsnh/skillsgist-cli): every option of `npx skillsgist`
-- [Contributing](CONTRIBUTING.md): how it works and local development
+## 致谢
 
-## License
+WeSkills 基于 [Qsnh/skillsgist](https://github.com/Qsnh/skillsgist)，延续了项目成员管理、设备授权、Agent Skills 发现协议、归档与版本历史。感谢 Qsnh 和 Skillsgist 的贡献者。
 
-[MIT](LICENSE)
+本项目以 [MIT 许可证](LICENSE) 开源。

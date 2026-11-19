@@ -1,80 +1,33 @@
-# Install and publish
+# 使用和审核
 
-## Install skills
+## 获取资源
 
-```bash
-npx skillsgist add https://skills.example.com/p/<project>          # public skills, no sign-in
-npx skillsgist login https://skills.example.com                    # once per computer, for private skills
-```
+在 Skills 详情页复制 WeSkills CLI 安装命令，也可以下载指定历史版本。项目视图保留 Skillsgist 的整项目客户端和兼容的 registry 协议。Skillsgist 客户端安装的目录需要通过 WeSkills CLI 安装后才能获得自动更新所需的本地清单。
 
-In CI, skip the sign-in and use the key from the project's settings page, stored as a masked secret:
+在「Agent 规范」按名称和描述搜索，预览规范并下载 `AGENTS.md`。把文件放在目标项目的工作区根目录。
 
-```yaml
-      - run: npx skillsgist add https://skills.example.com/p/<project> -g -y
-        env:
-          SKILLSGIST_HOST: https://skills.example.com
-          SKILLSGIST_INSTALL_KEY: ${{ secrets.SKILLSGIST_INSTALL_KEY }}
-```
-
-- `SKILLSGIST_INSTALL_KEY` is not `SKILLSGIST_TOKEN`, which is the publish token described below.
-- The CLI sends the key only when `SKILLSGIST_HOST` names the address being installed from.
-- One key covers one project.
-
-Every option of `npx skillsgist` is in the [skillsgist CLI](https://github.com/Qsnh/skillsgist-cli) repository.
-
-## Publish from a terminal or CI
-
-Generate an API token on `/me`, or have an admin generate one on your account's settings page, which suits an account used only by CI. It is shown once, and it travels only in the `Authorization` header, never in a URL.
+## 提交技能
 
 ```bash
-cd my-skill
-zip -r - . | curl --fail-with-body -sS -X PUT --data-binary @- \
-  -H "Authorization: Bearer $SKILLSGIST_TOKEN" \
-  -H "Content-Type: application/zip" \
-  https://skills.example.com/api/projects/<project>/skills/my-skill
+# 提交一个已有安装来源的本地目录
+weskills upload --dir .agents/skills/release-notes
+
+# 提交一个新技能
+weskills upload --server https://skills.example.com --project engineering --dir ./new-skill --json
 ```
 
-- The name in the URL must match the `name` in `SKILL.md`, and you must be a member of the project who is allowed to publish (an instance admin can publish into any project).
-- The body can be a zip, a gzipped tarball or a bare `SKILL.md`; the format is read from the bytes. Always send a `Content-Type` such as `application/zip`, `application/gzip` or `text/markdown`. Without one, curl labels the body as a form submission, and the server refuses it with `403`.
-- Add `?visibility=public` or `?visibility=private` to set visibility in the same call. Without it, a new skill starts private and an existing skill keeps its current visibility.
-- The API is idempotent. A new version answers `201`; content identical to the latest version answers `200` with `"unchanged": true` and still applies `visibility`. Errors answer JSON of the form `{ "error": "...", "message": "..." }`.
+目录根部需要有带 YAML 元数据的 `SKILL.md`，至少提供 `name` 和 `description`。网页同样支持单个 Markdown 文件、ZIP、tar.gz 和直接粘贴。每份上传压缩后最多 2 MB，解包最多 8 MB、200 个文件。
 
-Because an unchanged upload is a no-op, CI can republish on every push. For example, with GitHub Actions:
+项目管理员提交后直接发布。其他项目成员的提交使用 `员工ID-提交序号` 标识，进入「提交与审核」。现行版会保留到审核通过。提交后可以在审核列表查看待处理记录。CI 可以使用个人 API token 上传。私有资源拉取可用项目安装密钥、对应项目的设备 token 或具备访问权限的个人 API token。给 `WESKILLS_TOKEN` 赋值时同时显式设置 `--server` 或 `WESKILLS_SERVER`。
 
-```yaml
-name: Publish skill
+## 审核
 
-on:
-  push:
-    branches: [main]
-    paths: ["skills/release-notes/**"]
+项目管理员在「提交与审核」选择记录。技能审核页支持按文件查看新增、修改和删除，较大文件和二进制文件可通过归档下载查看。批准后系统生成新的线上版本号，将 `version` 和 `contributor` 写入 `SKILL.md` 的 YAML，并记一次贡献。批准新 Agent 规范后，规范进入其项目的目录。
 
-jobs:
-  publish:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Publish to skillsgist
-        working-directory: skills/release-notes
-        env:
-          SKILLSGIST_TOKEN: ${{ secrets.SKILLSGIST_TOKEN }}
-        run: |
-          zip -r - . | curl --fail-with-body -sS -X PUT --data-binary @- \
-            -H "Authorization: Bearer $SKILLSGIST_TOKEN" \
-            -H "Content-Type: application/zip" \
-            https://skills.example.com/api/projects/<project>/skills/release-notes
-```
+上传时基于本地安装版本进行检查。遇到线上版本变化时，先参考新归档把改动合并进本地目录，再运行 `weskills upload --dir ... --rebase` 提交。审核员批准时也会校验现行版；过期提交可删除后由员工重新提交。
 
-## Projects, accounts and roles
+系统在缺少二级标题「更新规范」时向上传的 `SKILL.md` 尾部添加说明。带有 `.weskills.json` 的本地安装目录可以按说明运行静默同步。连续使用同一版本时只查询版本元数据。发现新版本且目录完整时，CLI 校验归档摘要并替换目录。
 
-Every skill belongs to exactly one project, and people are members of projects. A project has a name, which its admins can change at any time, and an address such as `platform`, which is fixed when the project is created and appears in its page, install and API addresses. An instance has two roles:
+## 统计口径
 
-- **Members** see and install public skills and the skills of the projects they are in, publish into those projects where a project admin allows it, and manage the skills they own there.
-- **Admins** can also see and manage every project and every skill, create and delete projects, and manage every account.
-
-Each membership has its own role:
-
-- **Project members** see and install the project's skills. Once a project admin allows their publishing, they also publish into the project and manage the skills they own there. New members start with publishing blocked; a blocked member still sees and installs everything in the project, but can neither publish into it nor manage the skills they own there.
-- **Project admins** can also manage every skill in the project, rename the project, add, remove, promote and demote its members, and allow or block each member's publishing. Project admins can always publish.
-
-**Deleting an account reassigns its skills and the author records on its versions to the admin who deletes it**, because neither may point at a user that no longer exists. The original authorship is lost.
+排行榜每项展示前 20 名。两个下载榜按资源累计下载次数排序，并使用资源的可见范围。贡献榜统计有权限的项目里，经审核后合并为现行版的 Skills 提交数，包含新技能和更新版本。管理员直发与 Agent 规范审批不计入 Skills 合并次数。

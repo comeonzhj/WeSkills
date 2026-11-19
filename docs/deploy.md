@@ -1,91 +1,32 @@
-# Deploy and run
+# 通过 SSH 部署
 
-## Deploy
+本机安装 Node.js 24+、npm、SSH 客户端和 curl。目标云主机需要 Linux、systemd、curl、OpenSSL 和可通过 SSH 登录的 root 或具备免交互 sudo 权限的用户。缺少 Node 24+ 时，脚本会为 x86_64 和 arm64 下载 Node 24，校验包的 SHA-256，并安装到 WeSkills 的私有目录。
 
-### One click
+## HTTPS 域名
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/Qsnh/skillsgist)
-
-The button walks you through the whole deploy:
-
-1. Cloudflare copies this repository into your GitHub or GitLab account.
-2. It creates the D1 database and the R2 bucket.
-3. It asks for `SESSION_SECRET`. Paste a long random value, such as the output of `openssl rand -hex 32`.
-4. It builds the project, applies the database migrations and deploys the Worker.
-
-When it finishes, open `/setup` on the new Worker's URL to create the first admin. The copy is connected to Workers Builds, so every push to it deploys again.
-
-### With Wrangler
-
-You need Node.js 22 or later and a Cloudflare account.
+将域名解析到目标服务器。服务器需要有正在运行的 Nginx、Certbot 和可从公网访问的 80、443 端口。脚本支持常规 Nginx 的 `/etc/nginx/conf.d` 和宝塔 Nginx 的站点目录。
 
 ```bash
-git clone https://github.com/Qsnh/skillsgist.git
-cd skillsgist
-npm install
-npx wrangler login
-
-npx wrangler d1 create skillsgist --no-update-config
-npx wrangler r2 bucket create skillsgist --no-update-config
-openssl rand -hex 32 | npx wrangler secret put SESSION_SECRET
-
-npm run deploy                           # applies migrations, builds the CSS, deploys
+./deploy/ssh.sh SERVER_IP SSH_USER /absolute/path/to/ssh-key skills.example.com
 ```
 
-Then open `https://<your-worker>/setup` to create the first admin. The page switches itself off as soon as any user exists.
+脚本创建 `weskills.service`，监听 `127.0.0.1:8787`，写入该域名专用的虚拟主机，并使用 Certbot webroot 签发证书。通过 `WESKILLS_PORT=18878` 可以在首次部署时指定空闲端口。脚本检测已配置的同名站点，在 Nginx 配置通过检查后才重载，并在启动或 HTTPS 验证失败时恢复先前的服务切换和站点配置。
 
-### Custom domain
-
-To serve the instance on your own domain, open the Worker in the Cloudflare dashboard and add a Custom Domain under Settings → Domains & Routes.
-
-## Rate-limit sign-in requests
-
-`POST /api/oauth/device`, where `skillsgist login` starts, needs no credentials, and every call writes a row to D1. As new requests arrive, the Worker deletes expired ones and sign-ins unused for 90 days, but it does not limit how fast requests come, so once the instance has a custom domain, add a rate limiting rule to it: in the Cloudflare dashboard, open the domain, go to Security → Security rules, and choose Create rule → Rate limiting rules.
-
-- **If incoming requests match:** URI Path equals `/api/oauth/device`
-- **With the same characteristics:** IP
-- **When rate exceeds:** 5 requests per 10 seconds
-- **Then take action:** Block, for 10 seconds
-
-The Free plan allows one rule like this; Pro and above can count over a longer period and block for longer. `skillsgist login` calls the address once per sign-in, so a person signing in stays far below the limit. The rule covers only the custom domain, not the Worker's `workers.dev` address.
-
-## Download log retention
-
-`DOWNLOAD_LOG_RETENTION_DAYS` sets how many days download records are kept. The default is 90; an hourly job deletes anything older. A skill's download count is not affected.
-
-To change it, open the Worker in the Cloudflare dashboard and add it as a Text variable under Settings → Variables and Secrets. Use a positive whole number; any other value falls back to 90. Later deploys keep it.
-
-## Limits
-
-An upload may be at most 2 MB, unpack to at most 8 MB, and contain at most 200 files. These limits keep each request inside the Workers Free plan's 10 ms CPU budget. On Workers Paid you can raise `MAX_UPLOAD_BYTES`, `MAX_UNPACKED_BYTES` and `MAX_FILES` in `src/skills/normalize.ts`, and `PBKDF2_ITERATIONS` in `src/auth.ts`.
-
-## Upgrade
-
-With Wrangler, pull and deploy. `npm run deploy` applies any new migrations first:
+省略域名可使用 SSH 隧道访问。
 
 ```bash
-git pull
-npm install
-npm run deploy
+./deploy/ssh.sh SERVER_IP SSH_USER /absolute/path/to/ssh-key
+ssh -i /absolute/path/to/ssh-key -N -L 8787:127.0.0.1:8787 SSH_USER@SERVER_IP
 ```
 
-If you deployed with the button, your copy is a separate repository rather than a fork. Merge this repository into it and push; Workers Builds deploys again and applies any new migrations.
+## 初始化管理员
 
-```bash
-git remote add upstream https://github.com/Qsnh/skillsgist.git
-git fetch upstream
-git merge upstream/main
-git push
-```
+首次部署自动生成初始化口令。以服务器管理员账号通过 SSH 读取 `/etc/weskills/server.env` 中的 `SETUP_TOKEN`，然后打开 `/setup`。输入口令并创建管理员账号。完成后初始化入口自动关闭。
 
-## Reset a forgotten password
+## 升级与运维
 
-An admin can set a new password for any account on that account's settings page. If no admin can sign in, reset the password from a terminal instead:
-
-```bash
-npm run reset-password                   # asks for the username and the new password
-npm run reset-password -- alice          # names the account up front
-npm run reset-password -- alice --local  # the local development database
-```
-
-The script writes the new password straight to the D1 database, so it needs the same Wrangler login as `npm run deploy`. If you deployed with the button, clone your copy and run `npm install` and `npx wrangler login` first. It also signs out every computer signed in to that account with `skillsgist login`. Sessions that are already signed in stay signed in; to sign everyone out, change `SESSION_SECRET`.
+- 用同一部署命令升级。服务启动时自动应用新增迁移。
+- 数据位于 `/var/lib/weskills`，包含 SQLite 数据库和 Skills 归档。升级前可暂停 WeSkills 服务，对该目录和 `/etc/weskills/server.env` 一起备份。配置中包含会话签名密钥，按服务器凭证管理。
+- 服务日志可通过 `journalctl -u weskills` 查看。部署后用目标域名的 `/healthz` 验证路由。
+- 版本构建位于 `/opt/weskills/releases`。脚本回退可执行版本时，已应用的数据库迁移仍会保留。需要回退数据库时使用升级前备份。
+- Certbot 在续签该域名证书后通过专用钩子校验并重载同一 Nginx。
