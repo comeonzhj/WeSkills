@@ -38,6 +38,7 @@
   "dependencies": {
     "@hono/node-server": "^2.1.9",
     "diff": "^9.0.0",
+    "fflate": "^0.8.3",
     "hono": "^4.13.8",
     "marked": "^18.0.13",
     "parse5": "^8.1.1",
@@ -50,10 +51,17 @@
     "@types/node": "^26.6.2",
     "concurrently": "^10.0.5",
     "esbuild": "^0.28.2",
-    "fflate": "^0.8.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vitest": "^4.1.11",
     "wrangler": "^4.136.1"
-  }
+  },
+  "bin": {
+    "weskills": "cli/weskills.mjs"
+  },
+  "files": [
+    "cli/",
+    "README.md",
+    "LICENSE"
+  ]
 }
