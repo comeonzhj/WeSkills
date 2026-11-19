@@ -21,12 +21,13 @@ function AuthCard(props: { title: string; error?: string; children?: unknown }) 
   );
 }
 
-export function SetupPage(props: { error?: string }) {
+export function SetupPage(props: { error?: string; protectedSetup?: boolean }) {
   const t = useT();
   return (
     <Layout title={t.auth.setupTitle} user={null} hideSignIn>
       <AuthCard title={t.auth.setupHeading} error={props.error}>
         <form method="post" action="/setup" class="cf-stack">
+          {props.protectedSetup ? <Field label="Setup token" name="setupToken" type="password" autocomplete="off" /> : null}
           <Field label={t.common.username} name="username" autocomplete="username" hint={t.common.usernameHint} />
           <Field
             label={t.common.password}

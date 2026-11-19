@@ -60,20 +60,24 @@ const userSettings = async (
 
 usersRoutes.get("/setup", async (c) => {
   if ((await countUsers(c.env.DB)) > 0) return c.notFound();
-  return page(c, <SetupPage />);
+  return page(c, <SetupPage protectedSetup={!!c.env.SETUP_TOKEN} />);
 });
 
 usersRoutes.post("/setup", async (c) => {
   if ((await countUsers(c.env.DB)) > 0) return c.notFound();
   const t = messages(c);
   const body = await c.req.parseBody();
+  const protectedSetup = !!c.env.SETUP_TOKEN;
+  if (protectedSetup && body.setupToken !== c.env.SETUP_TOKEN) {
+    return page(c, <SetupPage protectedSetup error="Invalid setup token" />, 403);
+  }
   const username = String(body.username ?? "");
   const password = String(body.password ?? "");
   if (!USERNAME.test(username)) {
-    return page(c, <SetupPage error={t.auth.usernameInvalid} />, 400);
+    return page(c, <SetupPage protectedSetup={protectedSetup} error={t.auth.usernameInvalid} />, 400);
   }
   if (password.length < MIN_PASSWORD_LENGTH) {
-    return page(c, <SetupPage error={t.auth.passwordTooShort(MIN_PASSWORD_LENGTH)} />, 400);
+    return page(c, <SetupPage protectedSetup={protectedSetup} error={t.auth.passwordTooShort(MIN_PASSWORD_LENGTH)} />, 400);
   }
   const id = randomHex(8);
   const inserted = await createFirstAdmin(c.env.DB, {
