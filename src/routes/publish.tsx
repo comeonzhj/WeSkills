@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import { canAccessProject, requireManagedSkill, requireUser, userFromApiToken } from "../auth";
 import type { AppEnv, Ctx } from "../auth";
 import { API_PREFIX, page } from "../csrf";
-import { getVersion, getViewer, getSkill, listProjects, getArtifactByDigest } from "../db/queries";
+import { getVersion, getViewer, getSkill, getProject, listProjects, getArtifactByDigest, listPublishedForIndex } from "../db/queries";
 import { messages } from "../i18n";
 import { issue, issueText } from "../i18n/issues";
 import type { VersionRow, Viewer } from "../db/queries";
@@ -10,7 +10,7 @@ import { skillPath } from "../paths";
 import { repackWithSkillMd, unchangedError } from "../publish";
 import { bearerAccess, PRIVATE_HEADERS } from "../bearer";
 import { bearerDownloader, serveDownload } from "./download";
-import { digestFromArtifactFile } from "../artifact";
+import { digestFromArtifactFile, DIGEST_PREFIX } from "../artifact";
 import { submitSkill, SubmissionError } from "../submissions";
 import { UploadError } from "../skills/normalize";
 import { EditSkillPage, NewSkillPage, UploadVersionPage } from "../views/publish";
@@ -227,6 +227,19 @@ async function readAccess(c: Ctx, project: string) {
   const allowed = viewer ? canAccessProject(viewer, project) : access.kind === "install_key" && access.project === project;
   return { access, allowed, account };
 }
+function skillMetadata(project: string, name: string, version: number, digest: string) {
+  return { name, version, digest, url: `/api/projects/${project}/skills/${name}/archive/${digest.slice(DIGEST_PREFIX.length)}.zip` };
+}
+
+publishRoutes.get(`${API_PREFIX}projects/:project/skills`, async c => {
+  const project = c.req.param("project");
+  const { allowed } = await readAccess(c, project);
+  const skills = await listPublishedForIndex(c.env.DB, { kind: "project", project, publicOnly: !allowed });
+  if (!skills.length && (!allowed || !await getProject(c.env.DB, project))) return c.notFound();
+  c.header("Cache-Control", "private, no-store");
+  return c.json({ skills: skills.map(skill => skillMetadata(project, skill.slug, skill.version, skill.digest)) });
+});
+
 publishRoutes.get(`${API_PREFIX}projects/:project/skills/:slug`, async c => {
   const { project, slug } = c.req.param();
   const skill = await getSkill(c.env.DB, project, slug);
@@ -235,10 +248,7 @@ publishRoutes.get(`${API_PREFIX}projects/:project/skills/:slug`, async c => {
   const latest = await getVersion(c.env.DB, project, slug, skill.latest_version);
   if (!latest) return c.notFound();
   c.header("Cache-Control", "private, no-store");
-  return c.json({
-    version: latest.version, digest: latest.digest,
-    url: `/api/projects/${project}/skills/${slug}/archive/${latest.digest.slice(7)}.zip`,
-  });
+  return c.json(skillMetadata(project, slug, latest.version, latest.digest));
 });
 
 publishRoutes.get(`${API_PREFIX}projects/:project/skills/:slug/archive/:file`, async c => {

@@ -376,7 +376,7 @@ export async function listPublishedForIndex(
   db: D1Database,
   filter: IndexFilter,
   slug: string | null = null,
-): Promise<Array<{ slug: string; description: string; digest: string }>> {
+): Promise<Array<{ slug: string; description: string; digest: string; version: number }>> {
   const clauses: string[] = [];
   const binds: unknown[] = [];
   const bind = (value: unknown) => {
@@ -395,14 +395,14 @@ export async function listPublishedForIndex(
   if (slug !== null) clauses.push(`s.slug = ${bind(slug)}`);
   const { results } = await db
     .prepare(
-      `SELECT s.slug, v.description, v.digest
+      `SELECT s.slug, v.description, v.digest, v.version
        FROM skills s
        JOIN versions v ON v.skill_id = s.id AND v.version = s.latest_version
        WHERE ${clauses.join(" AND ")}
        ORDER BY s.slug`,
     )
     .bind(...binds)
-    .all<{ slug: string; description: string; digest: string }>();
+    .all<{ slug: string; description: string; digest: string; version: number }>();
   return results;
 }
 

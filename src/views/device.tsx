@@ -6,7 +6,7 @@ import type { Viewer } from "../db/queries";
 import { AlertIcon, Button, Field, Layout, PageHead } from "./layout";
 import { requestPlace } from "./place";
 
-export const LoginCommand = () => <code>skillsgist login</code>;
+export const LoginCommand = () => <code>weskills login</code>;
 
 export function DeviceCodePage(props: { user: Viewer; code: string; error?: unknown }) {
   const t = useT();

@@ -29,17 +29,17 @@ npm run dev
 
 ## CLI
 
-从 GitHub 安装，或在源码目录运行 `npm install -g .`。
+从 npm 安装，也可以通过 `npx --yes weskills` 直接运行。
 
 ```bash
-npm install -g git+https://github.com/comeonzhj/WeSkills.git
+npm install -g weskills
 weskills login --server https://skills.example.com --project engineering
 weskills pull --server https://skills.example.com --project engineering --skill release-notes
 weskills sync --dir .agents/skills/release-notes
 weskills upload --dir .agents/skills/release-notes
 ```
 
-`pull`、`sync` 和 `upload` 成功时默认无输出。用 `--json` 查看结果，错误写入 stderr。默认安装到当前项目的 `.agents/skills/<skill>`，也可通过 `--dir` 指定目标。首次安装保存来源、版本和文件指纹。后续同步会自动更新未修改的目录，并保留检测到的本地修改。详见 [使用与审核](docs/usage.md)。
+`pull`、`sync` 和 `upload` 成功时默认无输出。用 `--json` 查看结果，错误写入 stderr。默认安装到当前项目的 `.agents/skills/<skill>`，也可通过 `--dir` 指定目标。省略 `--skill` 可拉取项目内所有可见的 Skills。首次安装保存来源、版本和文件指纹。后续同步会自动更新未修改的目录，并保留检测到的本地修改。详见 [使用与审核](docs/usage.md)。
 
 ## 一键 SSH 部署
 

@@ -9,16 +9,17 @@ import { zipSync, unzipSync } from 'fflate'
 import { parse as yaml } from 'yaml'
 
 const manifest = '.weskills.json'
-const client = 'skillsgist-cli'
+const client = 'weskills-cli'
 const config = join(process.env.WESKILLS_CONFIG_DIR ?? join(homedir(), '.config', 'weskills'), 'credentials.json')
 const reserved = new Set([manifest, '.git', '.DS_Store', 'node_modules'])
 const maxBytes = 8 * 1024 * 1024
 const help = `weskills login --server https://skills.example.com [--project team]
-weskills pull --server URL --project team --skill name [--dir folder]
+weskills pull --server URL --project team [--skill name] [--dir folder]
 weskills sync --dir folder
 weskills upload --dir folder [--server URL --project team] [--rebase]
 weskills logout --server URL
 
+Omit --skill to pull all visible Skills in the project.
 pull, sync and upload are quiet by default. Pass --json for machine-readable status.
 WESKILLS_TOKEN may supply a device token or account API token for a trusted server.`
 
@@ -59,7 +60,8 @@ function segment(value, label) {
   return value
 }
 
-const endpoint = (project, skill) => `/api/projects/${segment(project, 'project')}/skills/${segment(skill, 'skill name')}`
+const projectEndpoint = project => `/api/projects/${segment(project, 'project')}/skills`
+const endpoint = (project, skill) => `${projectEndpoint(project)}/${segment(skill, 'skill name')}`
 
 async function request(server, pathname, token, options = {}) {
   const url = new URL(pathname, server)
@@ -194,6 +196,43 @@ async function replace(root, entries, metadata, previousFingerprint, existed) {
   }
 }
 
+async function installation(root) {
+  try {
+    if (!(await lstat(root)).isDirectory()) throw new Error('Skill directory must be a real directory')
+  } catch (error) {
+    if (error.code === 'ENOENT') return { exists: false, metadata: null }
+    throw error
+  }
+  return { exists: true, metadata: await jsonFile(join(root, manifest)) }
+}
+
+async function pullSkill({ server, project, token, root, name, metadata, exists, latest, preserveChanges }) {
+  if (metadata && (name !== metadata.skill || project !== metadata.project || server !== origin(metadata.server))) {
+    if (preserveChanges) return { status: 'local_changes' }
+    throw new Error('Skill, server or project differs from the installation source')
+  }
+  if (!/^sha256:[a-f0-9]{64}$/.test(latest.digest) || !Number.isSafeInteger(latest.version)) {
+    throw new Error('Registry returned invalid version metadata')
+  }
+  if (metadata?.digest === latest.digest && metadata.version === latest.version) {
+    return { status: 'current', version: latest.version }
+  }
+  const files = exists ? await collect(root, true) : new Map()
+  const hash = fingerprint(files)
+  if (exists && (metadata ? hash !== metadata.fingerprint : (await readdir(root)).length)) {
+    if (preserveChanges) return { status: 'local_changes', version: latest.version }
+    throw new Error('Destination contains local files or edits')
+  }
+  const response = await request(server, latest.url, token)
+  if (!response.ok) throw new Error(`Download failed (HTTP ${response.status})`)
+  const bytes = new Uint8Array(await response.arrayBuffer())
+  if (`sha256:${digest(bytes)}` !== latest.digest) throw new Error('Archive digest verification failed')
+  const entries = safeEntries(bytes)
+  await replace(root, entries, { server, project, skill: name, version: latest.version,
+    digest: latest.digest, fingerprint: fingerprint(entries) }, hash, exists)
+  return { status: 'updated', version: latest.version }
+}
+
 async function main() {
   const { positionals: [command], values } = parseArgs({
     allowPositionals: true,
@@ -205,15 +244,11 @@ async function main() {
   })
   if (!command || values.help || command === 'help') { console.log(help); return }
   if (!['login', 'logout', 'pull', 'sync', 'upload'].includes(command)) throw new Error(`Unknown command: ${command}`)
-  const root = resolve(values.dir ?? (command === 'pull' ? join('.agents', 'skills', segment(values.skill, 'skill name')) : '.'))
-  let exists = true
-  try {
-    if (!(await lstat(root)).isDirectory()) throw new Error('Skill directory must be a real directory')
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error
-    exists = false
-  }
-  const metadata = exists && !['login', 'logout'].includes(command) ? await jsonFile(join(root, manifest)) : null
+  const bulk = command === 'pull' && !values.skill
+  const localOperation = ['sync', 'upload'].includes(command) || (command === 'pull' && !bulk)
+  const root = resolve(values.dir ?? (command === 'pull'
+    ? join('.agents', 'skills', ...(bulk ? [] : [segment(values.skill, 'skill name')])) : '.'))
+  const { exists, metadata } = localOperation ? await installation(root) : { exists: false, metadata: null }
   if (command === 'sync' && !metadata) throw new Error('This directory has no WeSkills installation metadata')
   const specifiedServer = values.server ?? process.env.WESKILLS_SERVER
   const server = origin(specifiedServer ?? metadata?.server ?? (() => { throw new Error('Set --server') })())
@@ -252,32 +287,22 @@ async function main() {
         method: 'PUT', headers: { 'Content-Type': 'application/zip' }, body: bytes,
       }))
     }
+  } else if (bulk) {
+    const { skills } = await responseJson(await request(server, projectEndpoint(project), token))
+    if (!Array.isArray(skills)) throw new Error('Registry returned an invalid project catalog')
+    const results = []
+    for (const latest of skills) {
+      const name = segment(latest.name, 'skill name')
+      const destination = join(root, name)
+      const local = await installation(destination)
+      const outcome = await pullSkill({ server, project, token, root: destination, name, latest, ...local, preserveChanges: true })
+      results.push({ name, ...outcome })
+    }
+    result = { skills: results }
   } else {
     const name = values.skill ?? metadata?.skill
-    if (metadata && name !== metadata.skill) throw new Error('Skill differs from the installation source')
     const latest = await responseJson(await request(server, endpoint(project, name), token))
-    if (!/^sha256:[a-f0-9]{64}$/.test(latest.digest) || !Number.isSafeInteger(latest.version)) {
-      throw new Error('Registry returned invalid version metadata')
-    }
-    if (metadata?.digest === latest.digest && metadata.version === latest.version) {
-      result = { status: 'current', version: latest.version }
-    } else {
-      const files = exists ? await collect(root, true) : new Map()
-      const hash = fingerprint(files)
-      if (exists && (metadata ? hash !== metadata.fingerprint : (await readdir(root)).length)) {
-        if (command !== 'sync') throw new Error('Destination contains local files or edits')
-        result = { status: 'local_changes', version: latest.version }
-      } else {
-        const response = await request(server, latest.url, token)
-        if (!response.ok) throw new Error(`Download failed (HTTP ${response.status})`)
-        const bytes = new Uint8Array(await response.arrayBuffer())
-        if (`sha256:${digest(bytes)}` !== latest.digest) throw new Error('Archive digest verification failed')
-        const entries = safeEntries(bytes)
-        await replace(root, entries, { server, project, skill: name, version: latest.version,
-          digest: latest.digest, fingerprint: fingerprint(entries) }, hash, exists)
-        result = { status: 'updated', version: latest.version }
-      }
-    }
+    result = await pullSkill({ server, project, token, root, name, metadata, exists, latest, preserveChanges: command === 'sync' })
   }
   if (values.json && !values.quiet) console.log(JSON.stringify(result))
 }

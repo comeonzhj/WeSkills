@@ -2,7 +2,7 @@
 
 ## 获取资源
 
-在 Skills 详情页复制 WeSkills CLI 安装命令，也可以下载指定历史版本。项目视图保留 Skillsgist 的整项目客户端和兼容的 registry 协议。Skillsgist 客户端安装的目录需要通过 WeSkills CLI 安装后才能获得自动更新所需的本地清单。
+在 Skills 详情页复制 WeSkills CLI 安装命令，也可以下载指定历史版本。项目视图提供 `weskills pull --server URL --project PROJECT`，一次拉取项目中所有有权访问的 Skills。批量拉取会保留有本地修改的目录。用 `--json` 可以查看每项结果。
 
 在「Agent 规范」按名称和描述搜索，预览规范并下载 `AGENTS.md`。把文件放在目标项目的工作区根目录。
 

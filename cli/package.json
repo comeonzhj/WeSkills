@@ -1,0 +1,14 @@
+{
+  "name": "weskills",
+  "version": "0.2.0",
+  "description": "Command-line client for the WeSkills registry",
+  "type": "module",
+  "license": "MIT",
+  "bin": { "weskills": "weskills.mjs" },
+  "files": ["weskills.mjs"],
+  "engines": { "node": ">=22" },
+  "dependencies": { "fflate": "^0.8.3", "yaml": "^2.9.1" },
+  "repository": { "type": "git", "url": "git+https://github.com/comeonzhj/WeSkills.git", "directory": "cli" },
+  "homepage": "https://github.com/comeonzhj/WeSkills#cli",
+  "publishConfig": { "registry": "https://registry.npmjs.org/", "access": "public" }
+}

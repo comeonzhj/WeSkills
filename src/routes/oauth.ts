@@ -29,7 +29,8 @@ oauthRoutes.get("/api/whoami", async (c) => {
   return Response.json(body, { headers: PRIVATE_HEADERS });
 });
 
-export const CLIENT_ID = "skillsgist-cli";
+export const CLIENT_ID = "weskills-cli";
+const CLIENT_IDS = new Set([CLIENT_ID, "skillsgist-cli"]);
 export const DEVICE_GRANT = "urn:ietf:params:oauth:grant-type:device_code";
 
 const NO_STORE = { "Cache-Control": "no-store" };
@@ -71,7 +72,7 @@ oauthRoutes.get("/.well-known/oauth-authorization-server", (c) => {
 
 oauthRoutes.post("/api/oauth/device", async (c) => {
   const body = await formFields(c);
-  if (body.client_id !== CLIENT_ID) return oauthError("invalid_client", 401);
+  if (!CLIENT_IDS.has(body.client_id)) return oauthError("invalid_client", 401);
   const now = Date.now();
   c.executionCtx.waitUntil(
     deleteStaleLogins(c.env.DB, now).catch((err) => console.error("stale cli login cleanup failed", err)),
@@ -109,7 +110,7 @@ oauthRoutes.post("/api/oauth/device", async (c) => {
 
 oauthRoutes.post("/api/oauth/token", async (c) => {
   const body = await formFields(c);
-  if (body.client_id !== CLIENT_ID) return oauthError("invalid_client", 401);
+  if (!CLIENT_IDS.has(body.client_id)) return oauthError("invalid_client", 401);
   if (body.grant_type !== DEVICE_GRANT) return oauthError("unsupported_grant_type");
   if (!body.device_code) return oauthError("invalid_request");
   const login = await getLoginByDeviceCodeHash(c.env.DB, await sha256Hex(body.device_code));
