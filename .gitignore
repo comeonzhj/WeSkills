@@ -12,3 +12,5 @@ docs/superpowers/
 /data/
 /.DS_Store
 /dist/
+
+/public/assets/

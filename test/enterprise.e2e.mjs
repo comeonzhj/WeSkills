@@ -92,6 +92,15 @@ test('permissions, quiet CLI, review workflow, Agent templates and rankings', as
   const admin = cookie(await post('/setup', null, { username: 'root', password, setupToken: 'test-setup' }))
   assert.ok(admin)
   assert.equal((await open('/setup')).status, 404)
+  const homepage = await (await open('/', admin)).text()
+  for (const [, assetPath] of homepage.matchAll(/["'](\/assets\/app\.[a-f0-9]{16}\.(?:css|js|png))["']/g)) {
+    const asset = await open(assetPath)
+    assert.equal(asset.status, 200)
+    assert.match(asset.headers.get('cache-control') ?? '', /immutable/)
+  }
+  assert.match(homepage, /<script src="\/assets\/app\.[a-f0-9]{16}\.js"/)
+  assert.match(await (await open('/new', admin)).text(), /data-submit-pending=/)
+  assert.match(await (await open('/agents/new', admin)).text(), /data-submit-pending=/)
   const employee = await account('employee', false)
   const reviewer = await account('reviewer', true)
   const outsider = await account('outsider')
@@ -154,10 +163,38 @@ test('permissions, quiet CLI, review workflow, Agent templates and rankings', as
   assert.equal((await post(`/submissions/${second.id}/approve`, reviewer.session)).status, 303)
   assert.equal((await open('/p/default/s/pm-make', employee.session)).status, 200)
 
+  const projectPull = (token, target) => cli(token, 'pull', '--project', 'default', '--dir', target, '--json')
+  const bulk = join(scratch, 'bulk')
+  await assert.rejects(projectPull(outsiderToken, bulk), /404/)
+  const projectResult = JSON.parse((await projectPull(memberToken, bulk)).stdout)
+  assert.deepEqual(projectResult.skills.map(skill => [skill.name, skill.status]), [
+    ['interaction-prd', 'updated'], ['pm-make', 'updated'],
+  ])
+  await appendFile(join(bulk, 'interaction-prd', 'SKILL.md'), '\nLocal project edit.\n')
+  await appendFile(join(interaction, 'SKILL.md'), '\nA newer direct release.\n')
+  assert.equal(JSON.parse((await upload(adminToken, interaction, ['--json'])).stdout).version, 3)
+  const skipped = JSON.parse((await projectPull(memberToken, bulk)).stdout)
+  assert.deepEqual(skipped.skills.map(skill => [skill.name, skill.status]), [
+    ['interaction-prd', 'local_changes'], ['pm-make', 'current'],
+  ])
+  assert.match(await readFile(join(bulk, 'interaction-prd', 'SKILL.md'), 'utf8'), /Local project edit/)
+
+
   const fields = { project: 'default', name: 'Engineering handbook', description: 'Coding playbook',
     file: new File(['# Guidelines\n\nReview changes.\n'], 'AGENTS.md', { type: 'text/markdown' }) }
   const queued = await post('/agents/new', employee.session, fields)
   assert.equal(queued.status, 303)
+  for (let index = 0; index < 30; index++) {
+    const extra = await post('/agents/new', employee.session, { ...fields, name: `Queued draft ${index}` })
+    assert.equal(extra.status, 303)
+  }
+  const newest = await (await open('/submissions', reviewer.session)).text()
+  assert.match(newest, /Queued draft 29/)
+  assert.doesNotMatch(newest, /Engineering handbook/)
+  const previous = /rel="next" href="([^"]+)"/.exec(newest)?.[1]
+  assert.ok(previous)
+  assert.match(await (await open('/submissions' + previous, reviewer.session)).text(), /Engineering handbook/)
+  assert.doesNotMatch(await (await open('/submissions', outsider.session)).text(), /Queued draft|Engineering handbook/)
   const standardId = new URL(queued.headers.get('location'), origin).searchParams.get('submitted')
   const approved = await post(`/submissions/${standardId}/approve`, reviewer.session)
   assert.equal(approved.status, 303)

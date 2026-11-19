@@ -10,6 +10,7 @@ export const zhCN: Messages = {
     mainNav: "主导航",
     footerNav: "页脚",
     publish: "发布",
+    submitSkill: "提交技能",
     signIn: "登录",
     account: "账号",
     projects: "项目",
@@ -121,7 +122,9 @@ export const zhCN: Messages = {
   },
   skills: {
     title: "技能",
-    hero: "查找要安装的技能",
+    hero: "团队 Skills 目录",
+    directoryIntro: "查找和安装团队维护的技能，查看使用方法和历史版本。",
+    directoryCli: "在项目里安装、同步和提交技能。",
     heroAnon: (cli, signIn) => [
       "本仓库通过 ",
       cli,

@@ -5,14 +5,14 @@ import type { CliLoginSummary } from "../db/logins";
 import { useLocale, useT } from "../i18n";
 import { formatAgo, formatDate, formatStamp } from "../i18n/format";
 import { userSettingsPath } from "../paths";
-import { Alert, AlertIcon, Button, CodeBlock, ConfirmDelete, Field, Layout, PageHead, Panel, Select } from "./layout";
+import { brandImage, Alert, AlertIcon, Button, CodeBlock, ConfirmDelete, Field, Layout, PageHead, Panel, Select } from "./layout";
 import type { UserRow, UserSummary, Viewer } from "../db/queries";
 
 function AuthCard(props: { title: string; error?: string; children?: unknown }) {
   return (
     <div class="cf-auth">
       <div class="cf-frame cf-auth-card">
-        <img src="/logo.png" width="48" height="48" alt="" class="cf-auth-mark" />
+        <img src={brandImage} width="48" height="48" alt="" class="cf-auth-mark" />
         <h1 class="cf-auth-title">{props.title}</h1>
         <Alert message={props.error} />
         {props.children}
@@ -199,7 +199,7 @@ export function MePage(props: { user: Viewer; logins: CliLoginSummary[]; newToke
             {props.logins.length === 0 ? (
               <div class="cf-panel-body">
                 <p class="cf-hint">{t.auth.noCliLogins}</p>
-                <CodeBlock>npx skillsgist login {origin}</CodeBlock>
+                <CodeBlock>npx --yes weskills login --server {origin}</CodeBlock>
               </div>
             ) : (
               <ul class="cf-rows">

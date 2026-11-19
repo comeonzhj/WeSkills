@@ -45,7 +45,7 @@ export function NewSkillPage(props: {
             </div>
           </div>
         ) : (
-          <Form action="/new" enctype="multipart/form-data" class="cf-frame cf-form">
+          <Form action="/new" enctype="multipart/form-data" pending="正在提交…" class="cf-frame cf-form">
             <div class="cf-form-section">
               <FilePicker label={t.skills.uploadArchive} hint={t.publish.archiveHint} />
             </div>
@@ -101,7 +101,7 @@ export function EditSkillPage(props: {
             <a href={`${skillPath(props.skill)}/upload`} class="cf-link">{t.skills.uploadArchive}</a>,
           )}
         </PageHead>
-        <Form action={`${skillPath(props.skill)}/edit`} enctype="multipart/form-data" class="cf-frame cf-form">
+        <Form action={`${skillPath(props.skill)}/edit`} enctype="multipart/form-data" pending="正在提交…" class="cf-frame cf-form">
           <header class="cf-panel-head">
             <span class="cf-chip">SKILL.md</span>
           </header>
@@ -139,7 +139,7 @@ export function UploadVersionPage(props: { user: UserRow; skill: Pick<SkillRow, 
         <PageHead title={t.publish.uploadHeading(props.skill.slug)} error={props.error}>
           {t.publish.uploadLede(<a href={`${skillPath(props.skill)}/edit`} class="cf-link">{t.publish.edit}</a>)}
         </PageHead>
-        <Form action={`${skillPath(props.skill)}/upload`} enctype="multipart/form-data" class="cf-frame cf-form">
+        <Form action={`${skillPath(props.skill)}/upload`} enctype="multipart/form-data" pending="正在提交…" class="cf-frame cf-form">
           <div class="cf-form-section">
             <FilePicker label={t.publish.archive} hint={t.publish.uploadHint(props.skill.slug)} />
           </div>

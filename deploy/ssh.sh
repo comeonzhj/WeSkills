@@ -32,7 +32,8 @@ trap cleanup EXIT
 
 mkdir -p "$stage"/{dist,public,migrations}
 cp dist/server.cjs "$stage/dist/"
-cp public/{app.css,zed-tokens.css,logo.png,favicon.png,apple-touch-icon.png,copy.js,fold.js,dismiss.js} "$stage/public/"
+cp public/{logo.png,favicon.png,apple-touch-icon.png} "$stage/public/"
+cp -R public/assets "$stage/public/"
 cp migrations/*.sql "$stage/migrations/"
 tar_options=()
 if [[ $(uname -s) == Darwin ]]; then tar_options=(--no-xattrs --no-mac-metadata); fi

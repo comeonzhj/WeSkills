@@ -20,16 +20,17 @@
   "scripts": {
     "test": "npm run test:e2e",
     "dev": "npm run build && npm start",
-    "build": "npx @tailwindcss/cli -i src/app.css -o public/app.css --minify && esbuild server/main.mjs --bundle --platform=node --target=node24 --format=cjs --outfile=dist/server.cjs",
+    "build": "tailwindcss -i src/app.css -o public/app.css --minify && node scripts/build-server.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "typecheck": "tsc --noEmit",
-    "verify:cli": "node scripts/verify-cli.mjs",
+    "verify:cli": "npm run test:e2e",
     "fixtures": "./scripts/make-fixtures.sh",
     "dev:worker": "concurrently \"npx @tailwindcss/cli -i src/app.css -o public/app.css --watch\" \"wrangler dev\"",
     "start": "node --env-file-if-exists=.env dist/server.cjs",
     "test:e2e": "npm run build && node --test test/enterprise.e2e.mjs",
     "test:worker": "vitest run",
-    "reset-password:worker": "node scripts/reset-password.mjs"
+    "reset-password:worker": "node scripts/reset-password.mjs",
+    "verify:cli:legacy": "node scripts/verify-cli.mjs"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.9",

@@ -169,6 +169,17 @@ NGINX
     "${nginx[@]}" -t && "${nginx[@]}" -s reload
     certbot certonly --webroot -w "$acme" -d "$domain" --cert-name "$domain" --agree-tos --register-unsafely-without-email --non-interactive
   fi
+  tls_listen="listen 443 ssl;"
+  http2_directive=""
+  nginx_version=$("${nginx[@]}" -v 2>&1)
+  if "${nginx[@]}" -V 2>&1 | grep -q -- '--with-http_v2_module'; then
+    if [[ $nginx_version =~ /([0-9]+)\.([0-9]+)\.([0-9]+) ]] &&
+       (( BASH_REMATCH[1] > 1 || BASH_REMATCH[2] > 25 || (BASH_REMATCH[2] == 25 && BASH_REMATCH[3] >= 1) )); then
+      http2_directive="http2 on;"
+    else
+      tls_listen="listen 443 ssl http2;"
+    fi
+  fi
   site_changed=1
   cat > "$site" <<NGINX
 # Managed by WeSkills
@@ -179,12 +190,17 @@ server {
     location / { return 301 https://$domain\$request_uri; }
 }
 server {
-    listen 443 ssl;
+    $tls_listen
+    $http2_directive
     server_name $domain;
     ssl_certificate $certificate/fullchain.pem;
     ssl_certificate_key $certificate/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     client_max_body_size 3m;
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 512;
+    gzip_types text/css text/javascript application/javascript application/json;
     location / {
         proxy_pass http://127.0.0.1:$port;
         proxy_http_version 1.1;

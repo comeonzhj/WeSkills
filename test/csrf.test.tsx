@@ -90,6 +90,7 @@ const READ_ONLY_GETS = new Set([
   "GET /submissions",
   "GET /submissions/:id",
   "GET /submissions/:id/archive",
+  "GET /api/projects/:project/skills",
   "GET /api/projects/:project/skills/:slug",
   "GET /api/projects/:project/skills/:slug/archive/:file",
   "GET /.well-known/agent-skills/index.json",

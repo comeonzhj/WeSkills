@@ -29,9 +29,13 @@ function SkillCell(props: { skill: ListedSkill; showDownloads: boolean }) {
   const s = props.skill;
   return (
     <li class="cf-cell">
+      <div class="ws-card-project">
+        <Icon><path d="M3 4h4l1 1.5h5v6.5H3z" /></Icon>
+        <span>{s.project_name}</span>
+      </div>
       <div class="cf-cell-head">
         <h3 class="cf-cell-title">
-          <a href={skillPath(s)} class="cf-cell-link">{fullName(s)}</a>
+          <a href={skillPath(s)} class="cf-cell-link">{s.slug}</a>
         </h3>
         <Visibility value={s.visibility} />
       </div>
@@ -88,22 +92,7 @@ function EmptyRegistry(props: { user: Viewer | null; q: string }) {
   );
 }
 
-function HeroLede(props: { user: Viewer | null }) {
-  const t = useT();
-  if (!props.user) {
-    return (
-      <p class="cf-hero-lede">
-        {t.skills.heroAnon(<code>weskills</code>, <a href="/login">{t.layout.signIn}</a>)}
-      </p>
-    );
-  }
-  if (props.user.memberships.length === 0) {
-    return <p class="cf-hero-lede">{t.skills.heroNoProject}</p>;
-  }
-  return <p class="cf-hero-lede">{t.skills.heroMember(<a href="/projects">{t.layout.projects}</a>)}</p>;
-}
-
-export function SearchForm(props: { action: string; q: string }) {
+export function SearchForm(props: { action: string; q: string; label?: string }) {
   const t = useT();
   return (
     <form method="get" action={props.action} class="cf-search" role="search">
@@ -111,13 +100,13 @@ export function SearchForm(props: { action: string; q: string }) {
         <circle cx="7" cy="7" r="4.5" />
         <path d="M10.5 10.5L14 14" />
       </Icon>
-      <label for="q" class="sr-only">{t.skills.search}</label>
+      <label for="q" class="sr-only">{props.label ?? t.skills.search}</label>
       <input
         id="q"
         name="q"
         type="search"
         value={props.q}
-        placeholder={t.skills.search}
+        placeholder={props.label ?? t.skills.search}
         class="cf-search-input"
       />
       <button type="submit" class="cf-search-submit">{t.skills.searchButton}</button>
@@ -135,7 +124,8 @@ export function SkillRegistry(props: {
   const t = useT();
   const count = props.skills.length;
   return (
-    <section class="cf-page cf-guides cf-registry" aria-labelledby="registry-title">
+    <section class="cf-page cf-registry ws-catalog" aria-labelledby="registry-title">
+      <SearchForm action={props.clearHref} q={props.q} />
       <div class="cf-registry-head">
         <h2 id="registry-title" class="cf-registry-title">
           {props.q ? t.skills.resultsFor(props.q) : t.skills.title}
@@ -144,19 +134,11 @@ export function SkillRegistry(props: {
         {props.q && count > 0 ? <a href={props.clearHref} class="cf-link">{t.skills.clearSearch}</a> : null}
         <span class="cf-registry-sort">{t.skills.sort}</span>
       </div>
-      <div class="cf-frame">
-        {count === 0 ? (
-          props.empty
-        ) : (
-          <div class="cf-grid-clip">
-            <ul class="cf-grid">
-              {props.skills.map((s) => (
-                <SkillCell skill={s} showDownloads={props.showDownloads} />
-              ))}
-            </ul>
-          </div>
-        )}
-      </div>
+      {count === 0 ? <div class="cf-frame ws-catalog-empty">{props.empty}</div> : (
+        <ul class="cf-grid ws-catalog-grid">
+          {props.skills.map(s => <SkillCell skill={s} showDownloads={props.showDownloads} />)}
+        </ul>
+      )}
     </section>
   );
 }
@@ -169,11 +151,27 @@ export function IndexPage(props: {
   const t = useT();
   return (
     <Layout title={t.skills.title} user={props.user} bare>
-      <section class="cf-hero" aria-labelledby="hero-title">
-        <div class="cf-hero-inner cf-hero-center">
-          <h1 id="hero-title" class="cf-hero-title">{t.skills.hero}</h1>
-          <HeroLede user={props.user} />
-          <SearchForm action="/" q={props.q} />
+      <section class="cf-page ws-catalog-intro" aria-labelledby="hero-title">
+        <div class="ws-blueprint">
+          <div class="ws-catalog-copy">
+            <h1 id="hero-title" class="cf-hero-title">{t.skills.hero}</h1>
+            <p>{t.skills.directoryIntro}</p>
+            <a href={props.user ? "/projects" : "/login"} class="cf-btn cf-btn-outline">
+              {props.user ? t.layout.projects : t.layout.signIn}
+              <Icon><path d="M3 8h10M9 4l4 4-4 4" /></Icon>
+            </a>
+          </div>
+          <div class="ws-cli-panel">
+            <div class="ws-cli-title">
+              <Icon><rect x="2.5" y="3.5" width="11" height="9" rx="1" /><path d="m5 6.5 1.5 1.5L5 9.5M8.5 9.5h2" /></Icon>
+              <span>WeSkills CLI</span>
+              <a href="https://www.npmjs.com/package/weskills">npm ↗</a>
+            </div>
+            <div class="ws-cli-body">
+              <p>{t.skills.directoryCli}</p>
+              <CodeBlock>npm install -g weskills</CodeBlock>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -329,7 +327,7 @@ export function SkillPage(props: {
   const isLatest = version.version === skill.latest_version;
   const path = skillPath(skill);
   const canInstall = skill.visibility === "public" || (props.user !== null && canAccessProject(props.user, skill.project));
-  const command = `weskills pull --server ${props.origin} --project ${skill.project} --skill ${skill.slug}`;
+  const command = `npx --yes weskills pull --server ${props.origin} --project ${skill.project} --skill ${skill.slug}`;
   return (
     <Layout title={fullName(skill)} user={props.user} bare>
       <section class="cf-hero" aria-labelledby="skill-title">

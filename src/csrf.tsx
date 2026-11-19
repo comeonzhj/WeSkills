@@ -33,10 +33,11 @@ export function Form(props: {
   action: string;
   class?: string;
   enctype?: "multipart/form-data";
+  pending?: string;
   children?: unknown;
 }) {
   return (
-    <form method="post" action={props.action} class={props.class} enctype={props.enctype}>
+    <form method="post" action={props.action} class={props.class} enctype={props.enctype} data-submit-pending={props.pending}>
       <CsrfField />
       {props.children}
     </form>

@@ -18,7 +18,14 @@ const env = {
 }
 const server = new Hono()
 server.use('*', bodyLimit({ maxSize: 3 * 1024 * 1024, onError: c => c.text('Request too large', 413) }))
-server.use('*', serveStatic({ root: './public' }))
+server.use('*', serveStatic({
+  root: './public',
+  onFound(path, c) {
+    if (/^\/assets\/app\.[a-f0-9]{16}\.(css|js|png)$/.test(c.req.path)) {
+      c.header('Cache-Control', 'public, max-age=31536000, immutable')
+    }
+  },
+}))
 server.all('*', c => {
   // Use the configured public origin for cookies, CSRF and absolute registry URLs.
   const incoming = new URL(c.req.url)

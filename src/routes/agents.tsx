@@ -7,6 +7,7 @@ import { Form, page } from "../csrf";
 import { getProject, listProjects } from "../db/queries";
 import { renderMarkdown } from "../render/markdown";
 import { stage, SubmissionError } from "../submissions";
+import { SearchForm } from "../views/skills";
 import { Button, ConfirmDelete, Field, Layout, PageHead, Panel, Select } from "../views/layout";
 
 export const agentRoutes = new Hono<AppEnv>();
@@ -19,16 +20,13 @@ agentRoutes.get("/agents", async c => {
     <PageHead title="Agent 规范中心" aside={user && <a href="/agents/new" class="cf-btn cf-btn-primary">上传规范</a>}>
       浏览团队的 AGENTS.md，下载后放到项目工作区根目录。
     </PageHead>
-    <form action="/agents" method="get" class="ws-search">
-      <input class="cf-input" name="q" value={q} aria-label="搜索规范名称和描述" placeholder="搜索规范名称和描述" />
-      <Button variant="outline">搜索</Button>
-    </form>
+    <div class="ws-agent-search"><SearchForm action="/agents" q={q} label="搜索规范名称和描述" /></div>
     <Panel title="规范目录" flush>
-      {entries.length ? <ul class="cf-list">{entries.map(entry => <li class="cf-row">
-        <div class="cf-row-main">
+      {entries.length ? <ul class="ws-queue">{entries.map(entry => <li>
+        <span class="ws-queue-type">AGENTS.md</span>
+        <div class="ws-queue-entry">
           <a href={agentPath(entry.id)}>{entry.name}</a>
-          <p>{entry.description}</p>
-          <span class="cf-hint">{entry.project_name} · <code>AGENTS.md</code></span>
+          <span>{entry.description} · {entry.project_name}</span>
         </div>
         <span class="ws-number">{entry.download_count} 次下载</span>
       </li>)}</ul> : <p class="cf-empty">{q ? "没有找到匹配的规范。" : "暂无可见规范。"}</p>}
@@ -42,7 +40,7 @@ async function uploadPage(c: Ctx, values: { name?: string; description?: string;
   return page(c, <Layout title="上传 Agent 规范" user={user}>
     <div class="cf-narrow">
       <PageHead title="上传 Agent 规范" error={values.error}>选择项目并上传 AGENTS.md。</PageHead>
-      {projects.length ? <Form action="/agents/new" enctype="multipart/form-data" class="cf-frame cf-form">
+      {projects.length ? <Form action="/agents/new" enctype="multipart/form-data" pending="正在提交…" class="cf-frame cf-form">
         <div class="cf-form-section cf-stack">
           <Field name="name" label="规范名称" value={values.name} />
           <Field name="description" label="规范描述" value={values.description} />

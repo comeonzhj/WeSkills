@@ -7,6 +7,10 @@ import { useLocale, useT } from "../i18n";
 import { LOCALE_NAMES, LOCALES } from "../i18n/locales";
 import { ADMIN_DOWNLOADS_PATH } from "../paths";
 
+declare const __WS_ASSETS__: { css: string; js: string; logo: string };
+const appAssets = typeof __WS_ASSETS__ === "undefined" ? null : __WS_ASSETS__;
+export const brandImage = appAssets?.logo ?? "/logo.png";
+
 export function Icon(props: { children?: unknown }) {
   return (
     <svg
@@ -125,8 +129,8 @@ export function Layout(props: {
           <meta name="viewport" content="width=device-width, initial-scale=1" />
           <meta name="color-scheme" content="light dark" />
           <title>{props.title} · WeSkills</title>
-          <link rel="icon" type="image/png" href="/favicon.png" />
-          <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+          <link rel="icon" type="image/png" href={appAssets?.logo ?? "/favicon.png"} />
+          <link rel="apple-touch-icon" href={appAssets?.logo ?? "/apple-touch-icon.png"} />
           <meta name="description" content={t.layout.tagline} />
           <meta property="og:site_name" content="WeSkills" />
           <meta property="og:type" content="website" />
@@ -137,11 +141,17 @@ export function Layout(props: {
           <meta property="og:image:height" content="512" />
           <meta property="og:image:alt" content={t.layout.ogImageAlt} />
           <meta name="twitter:card" content="summary" />
-          <link rel="stylesheet" href="/zed-tokens.css" />
-          <link rel="stylesheet" href="/app.css" />
-          <script src="/copy.js" defer />
-          <script src="/fold.js" defer />
-          <script src="/dismiss.js" defer />
+          {appAssets ? <>
+            <link rel="stylesheet" href={appAssets.css} />
+            <script src={appAssets.js} defer />
+          </> : <>
+            <link rel="stylesheet" href="/zed-tokens.css" />
+            <link rel="stylesheet" href="/app.css" />
+            <script src="/copy.js" defer />
+            <script src="/fold.js" defer />
+            <script src="/dismiss.js" defer />
+            <script src="/interaction.js" defer />
+          </>}
         </head>
         <body
           class="cf-body"
@@ -156,7 +166,7 @@ export function Layout(props: {
           <header class="cf-nav">
             <nav class="cf-nav-inner" aria-label={t.layout.mainNav}>
               <a href="/" class="cf-wordmark">
-                <img src="/logo.png" width="24" height="24" alt="" class="cf-wordmark-mark" />
+                <img src={brandImage} width="24" height="24" alt="" class="cf-wordmark-mark" />
                 WeSkills
               </a>
               <div class="ws-nav-links">
@@ -168,7 +178,7 @@ export function Layout(props: {
               <span class="flex-1" />
               {props.user ? (
                 <>
-                  <a href="/new" class="cf-btn cf-btn-outline">{t.layout.publish}</a>
+                  <a href="/new" class={path === "/" ? "cf-btn cf-btn-primary" : "cf-btn cf-btn-outline"}>{t.layout.submitSkill}</a>
                   <AccountMenu user={props.user} />
                 </>
               ) : props.hideSignIn ? null : (
@@ -183,7 +193,7 @@ export function Layout(props: {
             <div class="cf-footer-inner">
               <p>
                 <a href="/" class="cf-footer-mark">
-                  <img src="/logo.png" width="18" height="18" alt="" class="cf-wordmark-mark" />
+                  <img src={brandImage} width="18" height="18" alt="" class="cf-wordmark-mark" />
                   WeSkills
                 </a>
                 <span>{t.layout.tagline}</span>

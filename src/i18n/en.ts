@@ -12,6 +12,7 @@ export const en = {
     mainNav: "Main",
     footerNav: "Footer",
     publish: "Publish",
+    submitSkill: "Submit Skill",
     signIn: "Sign in",
     account: "Account",
     projects: "Projects",
@@ -127,7 +128,9 @@ export const en = {
   },
   skills: {
     title: "Skills",
-    hero: "Find a skill to install",
+    hero: "Team Skills directory",
+    directoryIntro: "Find ready-to-use Skills for the work you do. Every Skill includes its install command and version history.",
+    directoryCli: "Install, sync, and submit Skills from your project.",
     heroAnon: (cli: Slot, signIn: Slot) => [
       "This registry serves Agent Skills to the ",
       cli,

@@ -22,24 +22,46 @@ async function lookup(c: Ctx) {
   return entry && canManageProject(c.get("user"), entry.project) ? entry : null;
 }
 
+const PAGE_SIZE = 30;
+
 submissionRoutes.get("/submissions", requireUser, async c => {
   const user = c.get("user");
-  const { results } = await c.env.DB.prepare(`SELECT ${SUMMARY} ${FROM}
-     WHERE s.author_id = ?1 OR ?2 = 'admin' OR EXISTS (
-       SELECT 1 FROM memberships m WHERE m.user_id = ?1 AND m.project = s.project AND m.role = 'admin'
-     ) ORDER BY s.id DESC`).bind(user.id, user.role).all<Submission>();
+  const requested = Number(c.req.query("before"));
+  const before = Number.isSafeInteger(requested) && requested > 0 ? requested : Number.MAX_SAFE_INTEGER;
+  const db = c.env.DB;
+  const selection = user.role === "admin"
+    ? db.prepare(`SELECT ${SUMMARY} ${FROM} WHERE s.id < ? ORDER BY s.id DESC LIMIT ?`).bind(before, PAGE_SIZE + 1)
+    : db.prepare(`WITH authored AS (
+        SELECT id FROM submissions WHERE author_id = ?1 AND id < ?2 ORDER BY id DESC LIMIT ?3
+      ), reviewable AS (
+        SELECT id FROM submissions WHERE project IN (
+          SELECT project FROM memberships WHERE user_id = ?1 AND role = 'admin'
+        ) AND id < ?2 ORDER BY id DESC LIMIT ?3
+      ), visible AS (SELECT id FROM authored UNION SELECT id FROM reviewable)
+      SELECT ${SUMMARY} ${FROM} JOIN visible v ON v.id = s.id ORDER BY s.id DESC LIMIT ?3`)
+      .bind(user.id, before, PAGE_SIZE + 1);
+  const { results } = await selection.all<Submission>();
+  const items = results.slice(0, PAGE_SIZE);
+  const submitted = c.req.query("submitted");
   return page(c, <Layout title="提交与审核" user={user}>
-    <PageHead title="提交与审核">{results.some(item => String(item.id) === c.req.query("submitted") && item.author_id === user.id)
-      ? <span role="status">已提交，等待项目管理员审核。</span> : "查看待审核的技能和 Agent 规范。"}</PageHead>
-    <Panel title="待审核" flush>
-      {results.length ? <ul class="cf-list">{results.map(item => <li class="cf-row">
-        <div class="cf-row-main">
+    <PageHead title="提交与审核">
+      {items.some(item => String(item.id) === submitted && item.author_id === user.id)
+        ? <span role="status" class="ws-queue-success">已提交，等待项目管理员审核。</span> : "查看你的提交与有权限审核的资源。"}
+    </PageHead>
+    <Panel title="待审核" flush aside={<span class="ws-queue-meta">最新提交优先</span>}>
+      {items.length ? <ul class="ws-queue">{items.map(item => <li>
+        <span class="ws-queue-type">{item.kind === "agent" ? "AGENTS.md" : item.base_version ? `更新 v${item.base_version}` : "新技能"}</span>
+        <div class="ws-queue-entry">
           {canManageProject(user, item.project)
             ? <a href={`/submissions/${item.id}`}>{item.name}</a> : <strong>{item.name}</strong>}
-          <p class="cf-hint">{item.kind === "agent" ? "AGENTS.md" : item.base_version ? `更新 v${item.base_version}` : "新技能"} · {item.project} · {item.username}</p>
+          <span>{item.project} · {item.username}</span>
         </div>
         <code>{item.author_id}-{item.id}</code>
       </li>)}</ul> : <p class="cf-empty">暂无待审核的提交。</p>}
+      {(before < Number.MAX_SAFE_INTEGER || results.length > PAGE_SIZE) && <nav class="ws-queue-pagination" aria-label="提交列表分页">
+        {before < Number.MAX_SAFE_INTEGER && <a href="/submissions">返回最新提交</a>}
+        {results.length > PAGE_SIZE && <a rel="next" href={`?before=${items.at(-1)!.id}`}>更早的提交 →</a>}
+      </nav>}
     </Panel>
   </Layout>);
 });
@@ -50,10 +72,11 @@ async function review(c: Ctx) {
   const current = entry.kind === "skill" ? await getSkill(c.env.DB, entry.project, entry.slug) : null;
   const latest = current ? await getVersion(c.env.DB, current.project, current.slug, current.latest_version) : null;
   const base = latest ? await c.env.BUCKET.get(latest.r2_key) : null;
-  const before = base ? await readZip(new Uint8Array(await base.arrayBuffer())) : new Map<string, Uint8Array>();
+  const [before, after] = await Promise.all([
+    base ? base.arrayBuffer().then(bytes => readZip(new Uint8Array(bytes))) : new Map<string, Uint8Array>(),
+    entry.kind === "skill" ? readZip(archiveBytes(entry)) : new Map([["AGENTS.md", new TextEncoder().encode(entry.markdown)]]),
+  ]);
   if (latest && !before.has("SKILL.md")) before.set("SKILL.md", new TextEncoder().encode(latest.skill_md));
-  const after = entry.kind === "skill" ? await readZip(archiveBytes(entry))
-    : new Map([["AGENTS.md", new TextEncoder().encode(entry.markdown)]]);
   const file = c.req.query("file") ?? (entry.kind === "skill" ? "SKILL.md" : "AGENTS.md");
   const left = before.get(file);
   const right = after.get(file);
@@ -89,11 +112,11 @@ async function review(c: Ctx) {
           equalBytes(before.get(name)!, after.get(name)!) ? " 无变化" : " 修改"}</span>
       </li>)}</ul>
       <pre class="ws-diff">{diff.split("\n").map(line =>
-        <span class={line.startsWith("+") ? "ws-added" : line.startsWith("-") ? "ws-removed" : undefined}>{line}{"\n"}</span>,
+        <span class={line.startsWith("+") ? "ws-added" : line.startsWith("-") ? "ws-removed" : undefined}>{line}</span>,
       )}</pre>
     </Panel>
     <div class="ws-actions">
-      {!stale && <Form action={`/submissions/${entry.id}/approve`}><Button>审核通过并发布</Button></Form>}
+      {!stale && <Form action={`/submissions/${entry.id}/approve`} pending="正在发布…"><Button>审核通过并发布</Button></Form>}
       <ConfirmDelete label="删除提交" confirm="确认删除" action={`/submissions/${entry.id}/reject`}>
         将永久删除这份待审核提交。
       </ConfirmDelete>

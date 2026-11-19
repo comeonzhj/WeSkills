@@ -10,6 +10,7 @@ export const ja: Messages = {
     mainNav: "メイン",
     footerNav: "フッター",
     publish: "公開",
+    submitSkill: "スキルを提出",
     signIn: "サインイン",
     account: "アカウント",
     projects: "プロジェクト",
@@ -124,7 +125,9 @@ export const ja: Messages = {
   },
   skills: {
     title: "スキル",
-    hero: "インストールするスキルを探す",
+    hero: "チームの Skills",
+    directoryIntro: "チームが管理するスキルを探してインストールし、使い方やバージョン履歴を確認できます。",
+    directoryCli: "プロジェクトでスキルをインストール、同期、提出できます。",
     heroAnon: (cli, signIn) => [
       "このレジストリは ",
       cli,

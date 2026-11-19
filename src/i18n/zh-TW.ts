@@ -10,6 +10,7 @@ export const zhTW: Messages = {
     mainNav: "主要導覽",
     footerNav: "頁尾",
     publish: "發佈",
+    submitSkill: "提交技能",
     signIn: "登入",
     account: "帳號",
     projects: "專案",
@@ -121,7 +122,9 @@ export const zhTW: Messages = {
   },
   skills: {
     title: "技能",
-    hero: "尋找要安裝的技能",
+    hero: "團隊 Skills 目錄",
+    directoryIntro: "尋找並安裝團隊維護的技能，查看使用方式和歷史版本。",
+    directoryCli: "在專案中安裝、同步和提交技能。",
     heroAnon: (cli, signIn) => [
       "此儲存庫透過 ",
       cli,
