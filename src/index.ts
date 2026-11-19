@@ -12,7 +12,8 @@ import { publishRoutes } from "./routes/publish";
 import { registryRoutes } from "./routes/registry";
 import { skillsRoutes } from "./routes/skills";
 import { usersRoutes } from "./routes/users";
-import { approveSubmissions, submissionRoutes } from "./routes/submissions";
+import { agentRoutes } from "./routes/agents";
+import { submissionRoutes } from "./routes/submissions";
 import { scheduled } from "./scheduled";
 import type { Env } from "./types";
 
@@ -41,7 +42,7 @@ app.route("/", oauthRoutes);
 app.route("/", usersRoutes);
 app.route("/", deviceRoutes);
 app.route("/", publishRoutes);
-approveSubmissions(async () => { throw new Error("Unsupported submission type"); });
+app.route("/", agentRoutes);
 app.route("/", submissionRoutes);
 app.route("/", projectsRoutes);
 app.route("/", downloadsRoutes);

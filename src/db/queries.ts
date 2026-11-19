@@ -564,10 +564,10 @@ export async function renameProject(db: D1Database, slug: string, name: string):
 export async function deleteProject(db: D1Database, slug: string): Promise<boolean> {
   const [, project] = await db.batch([
     db
-      .prepare("DELETE FROM memberships WHERE project = ?1 AND NOT EXISTS (SELECT 1 FROM skills WHERE project = ?1)")
+      .prepare("DELETE FROM memberships WHERE project = ?1 AND NOT EXISTS (SELECT 1 FROM skills WHERE project = ?1) AND NOT EXISTS (SELECT 1 FROM agent_standards WHERE project = ?1)")
       .bind(slug),
     db
-      .prepare("DELETE FROM projects WHERE slug = ?1 AND NOT EXISTS (SELECT 1 FROM skills WHERE project = ?1)")
+      .prepare("DELETE FROM projects WHERE slug = ?1 AND NOT EXISTS (SELECT 1 FROM skills WHERE project = ?1) AND NOT EXISTS (SELECT 1 FROM agent_standards WHERE project = ?1)")
       .bind(slug),
   ]);
   return project.meta.changes === 1;

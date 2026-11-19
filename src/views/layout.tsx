@@ -158,6 +158,7 @@ export function Layout(props: {
                 <img src="/logo.png" width="24" height="24" alt="" class="cf-wordmark-mark" />
                 skillsgist
               </a>
+              <a href="/agents" class="ws-nav-link">Agent 规范中心</a>
               <span class="flex-1" />
               {props.user ? (
                 <>

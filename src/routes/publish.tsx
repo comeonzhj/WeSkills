@@ -2,13 +2,15 @@ import { Hono } from "hono";
 import { canAccessProject, requireManagedSkill, requireUser, userFromApiToken } from "../auth";
 import type { AppEnv, Ctx } from "../auth";
 import { API_PREFIX, page } from "../csrf";
-import { getVersion, getViewer, getSkill, listProjects } from "../db/queries";
+import { getVersion, getViewer, getSkill, listProjects, getArtifactByDigest } from "../db/queries";
 import { messages } from "../i18n";
 import { issue, issueText } from "../i18n/issues";
 import type { VersionRow, Viewer } from "../db/queries";
 import { skillPath } from "../paths";
 import { repackWithSkillMd, unchangedError } from "../publish";
-import { bearerAccess } from "../bearer";
+import { bearerAccess, PRIVATE_HEADERS } from "../bearer";
+import { bearerDownloader, serveDownload } from "./download";
+import { digestFromArtifactFile } from "../artifact";
 import { submitSkill, SubmissionError } from "../submissions";
 import { UploadError } from "../skills/normalize";
 import { EditSkillPage, NewSkillPage, UploadVersionPage } from "../views/publish";
@@ -217,19 +219,41 @@ export async function projectAccount(c: Ctx, project: string) {
     : null;
 }
 
+async function readAccess(c: Ctx, project: string) {
+  const account = await userFromApiToken(c);
+  const access = await bearerAccess(c);
+  const device = access.kind === "login" && access.projects.includes(project) ? await getViewer(c.env.DB, access.userId) : null;
+  const viewer = account ?? device;
+  const allowed = viewer ? canAccessProject(viewer, project) : access.kind === "install_key" && access.project === project;
+  return { access, allowed, account };
+}
 publishRoutes.get(`${API_PREFIX}projects/:project/skills/:slug`, async c => {
   const { project, slug } = c.req.param();
   const skill = await getSkill(c.env.DB, project, slug);
-  const account = await projectAccount(c, project);
-  const access = account ? null : await bearerAccess(c);
-  const allowed = account ? canAccessProject(account, project)
-    : access?.kind === "install_key" && access.project === project;
+  const { allowed } = await readAccess(c, project);
   if (!skill || (!allowed && skill.visibility !== "public")) return c.notFound();
   const latest = await getVersion(c.env.DB, project, slug, skill.latest_version);
   if (!latest) return c.notFound();
   c.header("Cache-Control", "private, no-store");
   return c.json({
     version: latest.version, digest: latest.digest,
-    url: `/p/${project}/d/${slug}/${latest.digest.slice(7)}.zip`,
+    url: `/api/projects/${project}/skills/${slug}/archive/${latest.digest.slice(7)}.zip`,
   });
+});
+
+publishRoutes.get(`${API_PREFIX}projects/:project/skills/:slug/archive/:file`, async c => {
+  const { project, slug, file } = c.req.param();
+  const digest = digestFromArtifactFile(file);
+  if (!digest) return c.notFound();
+  const [{ allowed, access, account }, artifact] = await Promise.all([
+    readAccess(c, project), getArtifactByDigest(c.env.DB, project, slug, digest),
+  ]);
+  if (!artifact || (!allowed && artifact.visibility !== "public")) return c.notFound();
+  const object = await c.env.BUCKET.get(artifact.r2_key);
+  if (!object) return c.notFound();
+  const response = serveDownload(c, object, artifact, false, account
+    ? { source: "web", userId: account.id, username: account.username, deviceName: null }
+    : bearerDownloader(access));
+  for (const [key, value] of Object.entries(PRIVATE_HEADERS)) response.headers.set(key, value);
+  return response;
 });

@@ -1,3 +1,4 @@
+import { releaseStandard } from "../agent-standards";
 import { createTwoFilesPatch } from "diff";
 import { Hono } from "hono";
 import { canManageProject, requireUser } from "../auth";
@@ -118,17 +119,15 @@ submissionRoutes.post("/submissions/:id/reject", requireUser, async c => {
   return c.redirect("/submissions", 303);
 });
 
-export function approveSubmissions(approveAgent: (db: D1Database, entry: Submission) => Promise<string>) {
-  submissionRoutes.post("/submissions/:id/approve", requireUser, async c => {
+submissionRoutes.post("/submissions/:id/approve", requireUser, async c => {
     const entry = await lookup(c);
     if (!entry) return c.notFound();
     try {
       const path = entry.kind === "skill" ? skillPath(await approveSkill(c.env, entry))
-        : await approveAgent(c.env.DB, entry);
+        : await releaseStandard(c.env.DB, entry, entry);
       return c.redirect(path, 303);
     } catch (error) {
       if (error instanceof SubmissionError) return c.text(error.message, error.status);
       throw error;
     }
   });
-}

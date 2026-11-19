@@ -54,6 +54,9 @@ export function openDatabase(directory, migrations) {
     }
     execute() {
       const { statement, args } = this.statement()
+      if (statement.columns().length > 0) {
+        return { results: statement.all(...args), success: true, meta: { changes: 0 } }
+      }
       const { changes, lastInsertRowid } = statement.run(...args)
       return { results: [], success: true, meta: { changes: Number(changes), last_row_id: Number(lastInsertRowid) } }
     }
