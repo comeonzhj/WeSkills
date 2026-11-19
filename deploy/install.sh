@@ -52,7 +52,7 @@ if [[ -e $unit ]] && ! grep -q '^# Managed by WeSkills$' "$unit"; then
 fi
 
 node_bin=$(command -v node || true)
-if [[ -z $node_bin ]] || ! "$node_bin" -e 'process.exit(+process.versions.node.split(".")[0] < 24)'; then
+if [[ -z $node_bin ]] || ! "$node_bin" -e 'process.exit(Number(+process.versions.node.split(".")[0] < 24))'; then
   case "$(uname -m)" in x86_64) arch=x64 ;; aarch64) arch=arm64 ;; *) echo "Install Node.js 24+ for this architecture" >&2; exit 1 ;; esac
   node_bin="$base/node/bin/node"
   if [[ ! -x $node_bin ]]; then
